@@ -1,0 +1,344 @@
+你现在是一名拥有 15 年经验的资深后端架构师 + 产品负责人 + 测试负责人，你正在为一个**花卉问诊 SaaS 平台 MVP**输出**完整、可直接落地的详细设计文档**。
+
+严格遵守以下所有规则（违反任意一条都视为失败）：
+
+1. **输出格式必须严格为 Markdown**，包含以下一级标题（顺序不可变）：
+   # 项目名称：PhytoOracle MVP
+   ## 1. 架构总览（必须含 Mermaid 类图 + 部署图）
+   ## 2. 高内聚低耦合设计原则说明
+   ## 3. 分层架构与模块划分（DDD 风格）
+   ## 4. 完整目录结构（树形，带文件职责说明）
+   ## 5. 核心服务与模块详细设计（每个模块单独二级标题）
+   ## 6. API 设计（OpenAPI 规范片段）
+   ## 7. 数据模型（Pydantic V2 完整代码）
+   ## 8. 知识本体设计（JSON Schema + 示例）
+   ## 9. 缓存与 Rate Limit 策略
+   ## 10. 多租户与权限设计
+   ## 11. 测试策略（单元/集成/复杂业务场景）
+   ## 12. 测试用例表格（至少 25 条，覆盖单例、边界、并发、失败重试）
+   ## 13. 部署与 CI/CD 方案
+   ## 14. 未来扩展点清单
+
+2. **核心方法论严格基于 PhytoOracle 项目**：
+   - 五大解耦本体（Plant/Disease/Feature/Host-Disease/Treatment Ontology）
+   - VLM 零样本诊断（Qwen VL Plus 主力 → ChatGPT → Grok → Claude 降级）
+   - 动态加权评分 + 模糊匹配（Major 0.8 / Minor 0.15 / Optional 0.05）
+   - 知识库纯 JSON + Git 版本化（管理员后台可编辑、API触发热更新）
+   - Q0-Q6问诊逻辑树（内容类型→植物类别→花卉种属→器官→完整性→异常→特征提取）
+
+3. **技术栈强制锁定（本地化部署，不得修改）**：
+   - 后端：FastAPI + Pydantic V2 + asyncpg（轻量数据访问）
+   - 前端：Next.js 15 (app router) + Shadcn UI + Tailwind CSS
+   - 数据库：本地 PostgreSQL 15+（直接安装或Docker）
+   - 认证：API Key存储（PostgreSQL）+ 简单登录界面
+   - 缓存：本地 Redis 7+（直接安装或Docker）
+   - VLM客户端：自建抽象层（支持Qwen/ChatGPT/Grok/Claude多Provider Fallback）
+   - 存储：本地文件系统（按日期+植物名+准确率分类）
+   - 部署：本地运行（python main.py）→ 生产环境云服务器（Nginx + Uvicorn）
+   - 管理后台：Streamlit（临时快速实现）
+   - 测试：Pytest（单元+集成）+ Playwright（E2E）
+
+   **MVP不做**：
+   - ❌ Docker容器化（直接Python运行）
+   - ❌ 多租户隔离（单租户共享知识库）
+   - ❌ 支付功能（无商业化）
+   - ❌ 配额管理（无限制）
+   - ❌ Rate Limit（信任用户）
+   - ❌ 异步任务队列（同步处理）
+   - ❌ 图片去重缓存（直接存储）
+   - ❌ CI/CD自动化（手工部署）
+
+4. **高内聚低耦合要求**：
+   - 每个模块只能有单一职责
+   - 依赖倒置：通过 protocol/interface 抽象
+   - 所有外部服务（LLM、Redis、Supabase）必须通过 adapter 层注入
+   - 禁止循环依赖（用 mypy --strict 检查）
+
+5. **目录结构参考下边**（本地化部署架构）：
+
+PhytoOracle/
+├── backend/                         # 后端服务（FastAPI）
+│   ├── apps/
+│   │   ├── api/                     # FastAPI 主应用
+│   │   │   ├── main.py              # 应用入口
+│   │   │   ├── deps.py              # 依赖注入（DB连接池、Redis、VLM Client）
+│   │   │   ├── routers/             # 路由模块
+│   │   │   │   ├── diagnosis.py     # 诊断接口
+│   │   │   │   ├── knowledge.py     # 知识库查询
+│   │   │   │   ├── admin.py         # 管理接口（知识库重载）
+│   │   │   │   └── auth.py          # 登录/API Key验证
+│   │   │   ├── schemas/             # API请求/响应模型
+│   │   │   │   ├── diagnosis.py     # 诊断相关Schema
+│   │   │   │   ├── knowledge.py     # 知识库Schema
+│   │   │   │   └── auth.py          # 认证Schema
+│   │   │   └── middleware/          # 中间件
+│   │   │       └── auth.py          # API Key验证中间件
+│   │   │
+│   │   └── admin/                   # 管理后台（Streamlit）
+│   │       ├── app.py               # Streamlit主入口
+│   │       └── pages/               # 后台页面
+│   │           ├── diseases.py      # 疾病管理
+│   │           ├── test_tool.py     # 诊断测试工具
+│   │           └── statistics.py    # 准确率统计
+│   │
+│   ├── core/                        # 核心配置与工具
+│   │   ├── config.py                # 配置管理（环境变量、数据库URL）
+│   │   ├── security.py              # API Key生成与验证
+│   │   ├── exceptions.py            # 自定义异常
+│   │   └── cache.py                 # Redis缓存工具类
+│   │
+│   ├── domain/                      # DDD领域模型（Pydantic V2）
+│   │   ├── diagnosis.py             # 诊断领域模型
+│   │   ├── disease.py               # 疾病本体模型
+│   │   ├── feature.py               # 特征本体模型
+│   │   ├── plant.py                 # 植物本体模型
+│   │   └── treatment.py             # 治疗本体模型
+│   │
+│   ├── infrastructure/              # 基础设施层
+│   │   ├── llm/
+│   │   │   ├── base.py              # VLM抽象基类（Protocol）
+│   │   │   ├── client.py            # VLM客户端（Fallback机制）
+│   │   │   ├── providers/           # VLM Provider实现
+│   │   │   │   ├── qwen.py          # Qwen VL Plus
+│   │   │   │   ├── chatgpt.py       # GPT-4o
+│   │   │   │   ├── grok.py          # Grok Vision
+│   │   │   │   └── claude.py        # Claude Sonnet
+│   │   │   └── prompts.py           # Q0-Q6 Prompt模板
+│   │   │
+│   │   ├── ontology/
+│   │   │   ├── loader.py            # JSON知识库加载器
+│   │   │   ├── matcher.py           # 模糊匹配引擎
+│   │   │   └── scorer.py            # 加权诊断评分器
+│   │   │
+│   │   ├── persistence/
+│   │   │   ├── database.py          # asyncpg连接池管理
+│   │   │   ├── redis_client.py      # Redis连接管理
+│   │   │   └── repositories/        # 数据访问层
+│   │   │       ├── diagnosis_repo.py    # 诊断记录CRUD
+│   │   │       ├── image_repo.py        # 图片元数据CRUD
+│   │   │       └── apikey_repo.py       # API Key CRUD
+│   │   │
+│   │   └── storage/
+│   │       └── local_storage.py     # 本地文件存储（按分类目录）
+│   │
+│   ├── services/                    # 业务逻辑层
+│   │   ├── diagnosis_service.py     # 诊断服务（核心业务逻辑）
+│   │   ├── knowledge_service.py     # 知识库服务（查询、重载）
+│   │   └── image_service.py         # 图片处理服务
+│   │
+│   ├── tests/                       # 测试目录
+│   │   ├── unit/                    # 单元测试
+│   │   │   ├── test_matcher.py      # 模糊匹配测试
+│   │   │   ├── test_scorer.py       # 加权评分测试
+│   │   │   └── test_vlm_client.py   # VLM Fallback测试
+│   │   ├── integration/             # 集成测试
+│   │   │   ├── test_diagnosis_api.py    # 诊断API测试
+│   │   │   └── test_knowledge_reload.py # 知识库重载测试
+│   │   └── e2e/                     # 端到端测试（Playwright）
+│   │       └── test_diagnosis_flow.py   # 完整诊断流程
+│   │
+│   ├── knowledge_base/              # 知识库JSON文件（Git版本控制）
+│   │   ├── diseases/                # 疾病本体
+│   │   │   ├── rose_black_spot.json
+│   │   │   ├── cherry_powdery_mildew.json
+│   │   │   └── ...
+│   │   ├── features/                # 特征本体
+│   │   │   └── feature_ontology.json
+│   │   ├── plants/                  # 植物本体
+│   │   │   ├── rosa.json
+│   │   │   ├── prunus.json
+│   │   │   └── ...
+│   │   ├── host_disease/            # 宿主-疾病关系
+│   │   │   └── associations.json
+│   │   └── treatments/              # 治疗方案（v1.3+）
+│   │
+│   ├── storage/                     # 本地文件存储目录
+│   │   ├── images/
+│   │   │   ├── unlabeled/           # 未标注图片
+│   │   │   │   ├── rose/
+│   │   │   │   └── cherry/
+│   │   │   ├── correct/             # 诊断正确
+│   │   │   └── incorrect/           # 诊断错误
+│   │   └── metadata/                # 图片元数据JSON
+│   │
+│   ├── scripts/                     # 运维脚本
+│   │   ├── init_db.sql              # 数据库初始化脚本
+│   │   ├── seed_apikeys.py          # 生成初始API Key
+│   │   └── validate_ontology.py     # 知识库JSON校验
+│   │
+│   ├── pyproject.toml               # Python依赖管理（Poetry）
+│   ├── .env.example                 # 环境变量模板
+│   └── README.md                    # 后端部署文档
+│
+├── frontend/                        # 前端（Next.js 15）
+│   ├── app/                         # App Router
+│   │   ├── page.tsx                 # 首页
+│   │   ├── diagnose/                # 诊断页面
+│   │   ├── history/                 # 历史记录
+│   │   └── login/                   # 登录页面
+│   ├── components/                  # React组件
+│   ├── lib/                         # 工具库
+│   ├── public/                      # 静态资源
+│   ├── package.json
+│   └── next.config.js
+│
+└── docs/                            # 项目文档
+    ├── requirements/                # 需求文档
+    ├── design/                      # 详细设计文档（本文档）
+    ├── methodology/                 # 方法论文档
+    └── api/                         # API文档（OpenAPI）
+
+
+6. **测试要求（最严格部分）**：
+   - 必须输出一个 **Markdown 表格**，包含以下字段：
+     | ID | 类型 | 描述 | 前置条件 | 输入 | 预期输出 | 覆盖点 |
+   - 至少 25 条，强制覆盖：
+     - 正常诊断（单图）
+     - Q0逐级过滤（不是植物/不是花卉/未识别花属/健康样本）
+     - Q1-Q6特征提取（各symptom_type分支）
+     - 置信度分层决策（≥0.85确诊 / 0.6-0.85疑似 / <0.6认怂）
+     - 知识库热更新（API触发重载后立即生效）
+     - VLM超时自动降级（Qwen→ChatGPT→Grok→Claude）
+     - 模糊匹配机制（COLOR_GROUPS、SIZE_ORDER±1级别）
+     - 加权诊断评分（Major/Minor/Optional权重计算）
+     - 管理员后台编辑本体后重载生效
+     - 错误图像格式返回400（非JPG/PNG/HEIC）
+     - 数据库连接失败（返回明确错误提示）
+     - API Key验证（有效/无效/缺失）
+     - 图片存储分类（unlabeled/correct/incorrect目录正确）
+     - 诊断历史查询（按日期/按植物/按置信度筛选）
+     - 并发诊断请求（10个并发不冲突）
+     - VLM兜底策略（知识库外疾病，score<0.6时触发）
+     - 完整性修正（complete=1.0 / partial=0.8 / close_up=0.6）
+     - 特征向量输出（包含Q0新增字段：content_type/plant_category/flower_genus）
+
+7. **禁止行为**：
+   - 禁止说"后续再补充"
+   - 禁止模糊描述（如"类似这样"）
+   - 禁止使用任何未列出的技术
+   - 禁止输出代码片段超过 50 行（除非是完整Pydantic模型或完整测试用例）
+
+8. **章节输出要求**：
+
+   **第9章：缓存策略**（MVP简化版）
+   - ❌ 不做Rate Limit（信任用户）
+   - ❌ 不做图片去重缓存（直接存储）
+   - ✅ 仅做VLM响应缓存（图片hash → VLM结果，TTL 7天）
+   - ✅ 缓存键设计：`vlm:{provider}:{image_hash}:{question_id}`
+
+   **第10章：权限设计**（MVP简化版）
+   - ❌ 不做多租户隔离（单租户，共享知识库）
+   - ✅ 仅做API Key验证（middleware检查X-API-Key header）
+   - ✅ 管理后台登录（简单用户名密码，存PostgreSQL）
+   - 权限分级：
+     - 普通用户：诊断API（需API Key）
+     - 管理员：诊断API + 知识库编辑 + 统计查询（需登录）
+
+   **第13章：部署方案**（本地化）
+   - 开发环境：
+     - PostgreSQL/Redis本地安装（brew/apt）
+     - 后端：`cd backend && poetry install && python -m apps.api.main`
+     - 前端：`cd frontend && npm install && npm run dev`
+     - 管理后台：`streamlit run apps/admin/app.py`
+   - 生产环境：
+     - 云服务器（阿里云/AWS）
+     - Nginx反向代理 + Uvicorn多进程
+     - PostgreSQL/Redis云服务器安装
+     - ❌ 不做CI/CD（手工部署，Git pull + 重启服务）
+
+   **第14章：未来扩展点**
+   - 多租户隔离（v1.2+）
+   - 支付与配额管理（v1.3+）
+   - Rate Limit与防滥用（v1.2+）
+   - 图片去重缓存（v1.2+）
+   - Docker容器化（v1.2+）
+   - CI/CD自动化（v1.3+）
+   - 异步任务队列（批量诊断，v1.3+）
+   - 实时通知（WebSocket诊断进度，v1.4+）
+
+9. **核心业务逻辑参考**（必须严格基于需求文档和方法论）：
+
+   **Q0-Q6问诊逻辑树**（来自需求文档3.1节）：
+   ```
+   Q0: 前置检查（逐级过滤）
+     Q0.0: 图片内容类型（plant/animal/person/object/landscape/other）
+     Q0.1: 植物类别（flower/vegetable/tree/crop/grass/other）
+     Q0.2: 花卉种属识别（Rosa/Prunus/Tulipa/Dianthus/Paeonia...）
+     Q0.3: 器官识别（flower/leaf）
+     Q0.4: 完整性检查（complete/partial/close_up）
+     Q0.5: 异常判断（healthy/abnormal）
+
+   Q1-Q6: 动态特征提取（根据symptom_type）
+     Q1: 症状类型（necrosis_spot/powdery_coating/chlorosis/rust_pustule...）
+     Q2-Q6: 动态问题（基于Q1结果）
+   ```
+
+   **加权诊断引擎**（来自方法论v5.0）：
+   - Major Features: 权重0.8（symptom_type 0.5 + color_center 0.3）
+   - Minor Features: 权重0.15（location 0.1 + additional_features 0.05）
+   - Optional Features: 权重0.05（size 0.03 + distribution 0.02）
+   - 诊断规则：
+     - confirmed: total_score ≥ 0.85 且 major_features ≥ 2/2
+     - suspected: 0.6 ≤ total_score < 0.85
+     - unlikely: total_score < 0.6
+
+   **模糊匹配规则**（来自方法论v5.0）：
+   ```python
+   COLOR_GROUPS = {
+       "黑褐色系": ["black", "dark_brown", "brown"],
+       "黄色系": ["yellow", "light_yellow", "yellowish_green"],
+       "白色系": ["white", "gray_white", "off_white"]
+   }
+   SIZE_ORDER = ["pinpoint", "small", "medium_small", "medium", "large"]
+   # 允许±1级别误差
+   ```
+
+   **VLM Fallback链**：
+   Qwen VL Plus (P0, 有免费额度) →
+   ChatGPT gpt-4o (P1, 付费) →
+   Grok Vision 2.0 (P2, 付费) →
+   Claude Sonnet 4.5 (P3, 高成本)
+
+   **知识库范围**（来自需求文档5.1节）：
+   - 5种花卉：Rosa/Prunus/Tulipa/Dianthus/Paeonia
+   - 18-24种疾病（每种花卉3-6种疾病）
+   - 五大本体：Plant/Disease/Feature/Host-Disease/Treatment
+
+10. **数据库表设计要求**：
+
+   必须包含以下表（PostgreSQL）：
+   - `diagnoses`：诊断记录（diagnosis_id, timestamp, image_path, feature_vector, diagnosis_result, scores, reasoning, vlm_provider, execution_time_ms）
+   - `images`：图片元数据（image_id, diagnosis_id, file_path, upload_time, plant_genus, organ, accuracy_label, notes）
+   - `api_keys`：API密钥（key_id, api_key_hash, created_at, expires_at, is_active）
+   - `admin_users`：管理员账号（user_id, username, password_hash, created_at）
+   - `knowledge_versions`：知识库版本（version_id, commit_hash, loaded_at, disease_count）
+
+11. **Pydantic V2模型要求**：
+
+   必须输出完整的领域模型代码（domain/目录），包括：
+   - `DiagnosisModel`：诊断结果模型
+   - `DiseaseOntology`：疾病本体模型
+   - `FeatureOntology`：特征本体模型
+   - `PlantOntology`：植物本体模型
+   - `FeatureVector`：特征向量模型
+   - `DiagnosisScores`：诊断评分模型
+
+12. **JSON Schema要求**：
+
+   必须输出完整的知识库JSON Schema，包括：
+   - Disease Ontology Schema（disease_id, disease_name, feature_vector, feature_importance, diagnosis_rules, visual_descriptions）
+   - Feature Ontology Schema（dimension, values, visual_description, fuzzy_matching_groups）
+   - Host-Disease Ontology Schema（plant_genus, associated_diseases, host_specificity）
+
+13. **参考文档路径**（必须查阅）：
+   - 需求文档：D:\项目管理\PhytoOracle\docs\requirements\需求文档.md
+   - 方法论文档：D:\项目管理\PhytoOracle\docs\methodology\方法论v4.0完整文档.md
+   - 实验验证：D:\项目管理\NewBloomCheck\FlowerSpecialist\scripts\MVP\v11\
+
+---
+
+**现在开始输出详细设计文档，严格遵守以上所有约束！**
+
+
+
+
