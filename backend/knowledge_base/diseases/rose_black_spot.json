@@ -1,0 +1,124 @@
+{
+  "version": "4.1",
+  "disease_id": "rose_black_spot",
+  "disease_name": "玫瑰黑斑病",
+  "common_name_en": "Rose Black Spot",
+  "pathogen": "Diplocarpon rosae（真菌）",
+
+  "feature_vector": {
+    "symptom_type": "necrosis_spot",
+    "color_center": ["black", "brown", "dark_brown"],
+    "color_border": ["yellow", "light_yellow"],
+    "location": ["lamina", "petiole"],
+    "size": "medium",
+    "distribution": "scattered"
+  },
+
+  "feature_importance": {
+    "major_features": {
+      "_weight": 0.8,
+      "features": [
+        {
+          "dimension": "symptom_type",
+          "expected_values": ["necrosis_spot"],
+          "weight": 0.5,
+          "description": "坏死性斑点是黑斑病的核心症状类型"
+        },
+        {
+          "dimension": "color_border",
+          "expected_values": ["yellow", "light_yellow", "halo_yellow"],
+          "weight": 0.3,
+          "description": "黄色晕圈是Rose Black Spot的KEY诊断特征"
+        }
+      ]
+    },
+    "minor_features": {
+      "_weight": 0.15,
+      "features": [
+        {
+          "dimension": "color_center",
+          "expected_values": ["black", "brown", "dark_brown"],
+          "weight": 0.1,
+          "description": "斑点中心为深色（黑色或深褐色）"
+        },
+        {
+          "dimension": "location",
+          "expected_values": ["lamina", "petiole"],
+          "weight": 0.05,
+          "description": "通常出现在叶片主体或叶柄"
+        }
+      ]
+    },
+    "optional_features": {
+      "_weight": 0.05,
+      "features": [
+        {
+          "dimension": "size",
+          "expected_values": ["small", "medium", "medium_small"],
+          "weight": 0.03,
+          "description": "斑点大小随病程发展变化"
+        },
+        {
+          "dimension": "distribution",
+          "expected_values": ["scattered", "random", "along_vein"],
+          "weight": 0.02,
+          "description": "通常散布或随机分布"
+        }
+      ]
+    }
+  },
+
+  "diagnosis_rules": {
+    "confirmed": [
+      {
+        "rule_id": "R1",
+        "logic": "major_features >= 2/2",
+        "confidence": 0.95,
+        "description": "主要特征全部匹配（symptom_type + color_border）"
+      },
+      {
+        "rule_id": "R2",
+        "logic": "major_features >= 1/2 AND minor_features >= 2/2",
+        "confidence": 0.85,
+        "description": "1个主要特征 + 所有次要特征匹配"
+      }
+    ],
+    "suspected": [
+      {
+        "rule_id": "S1",
+        "logic": "major_features >= 1/2 AND minor_features >= 1/2",
+        "confidence": 0.70,
+        "description": "1个主要特征 + 至少1个次要特征匹配"
+      },
+      {
+        "rule_id": "S2",
+        "logic": "major_features >= 1/2",
+        "confidence": 0.60,
+        "description": "至少1个主要特征匹配"
+      }
+    ]
+  },
+
+  "visual_descriptions": {
+    "overall": "叶片上有黑色或深褐色的圆形坏死斑点，【关键特征】每个斑点外围通常有明显的黄色晕圈（像月亮周围的光晕），斑点多为散布分布",
+    "color_border": "观察斑点边缘，寻找像煎蛋蛋白环绕蛋黄的黄色晕圈",
+    "symptom_type": "坏死斑点看起来像被香烟烫过留下的焦痕，组织干燥皱缩",
+    "color_center": "斑点中心为黑色或深褐色，与健康组织对比明显",
+    "early_stage": "小的褐色斑点（针尖大小），可能无明显晕圈",
+    "middle_stage": "斑点扩大至中等大小，黄色晕圈明显",
+    "late_stage": "斑点融合成大片坏死区域，可能导致叶片脱落",
+    "differential_vs_brown_spot": "Rose Black Spot有黄色晕圈，褐斑病无",
+    "differential_vs_powdery_mildew": "Rose Black Spot是坏死斑点，白粉病是白色粉末覆盖",
+    "differential_vs_rust": "Rose Black Spot是圆形黑斑，锈病是橙红色疱疹状突起"
+  },
+
+  "host_plants": ["Rosa"],
+
+  "typical_symptoms": [
+    "叶片出现圆形或近圆形的黑色坏死斑点",
+    "斑点外围有明显的黄色晕圈（KEY特征）",
+    "斑点中心为黑色或深褐色，组织干燥皱缩",
+    "斑点通常散布分布，严重时融合",
+    "感染严重可导致叶片脱落"
+  ]
+}

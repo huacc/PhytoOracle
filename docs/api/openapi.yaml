@@ -1,0 +1,902 @@
+openapi: 3.0.3
+info:
+  title: PhytoOracle API
+  version: 1.0.0
+  description: |
+    花卉疾病诊断系统API
+
+    ## 功能概述
+    - 基于视觉大模型（VLM）的疾病诊断
+    - 知识库管理与查询
+    - 诊断历史追踪
+    - 管理后台认证
+
+    ## 诊断流程
+    1. 上传花卉图片（JPG/PNG/HEIC格式）
+    2. 系统通过VLM提取特征（Q0-Q6问诊序列）
+    3. 匹配知识库进行诊断（三层渐进诊断）
+    4. 返回确诊/疑似/未知结果
+
+  contact:
+    name: PhytoOracle Team
+    email: support@phytooracle.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8000/api/v1
+    description: 开发环境
+  - url: https://api.phytooracle.com/api/v1
+    description: 生产环境
+
+tags:
+  - name: Diagnosis
+    description: 疾病诊断相关接口
+  - name: Knowledge
+    description: 知识库查询接口
+  - name: Admin
+    description: 管理后台接口
+  - name: Auth
+    description: 认证授权接口
+
+paths:
+  /diagnose:
+    post:
+      summary: 执行疾病诊断
+      description: |
+        上传花卉图片进行疾病诊断。系统通过VLM提取特征并匹配知识库。
+
+        **支持的花卉种属**：
+        - Rosa（玫瑰/月季）
+        - Prunus（樱花/李属）
+        - Tulipa（郁金香）
+        - Dianthus（康乃馨）
+        - Paeonia（牡丹）
+
+        **诊断结果类型**：
+        - confirmed（确诊）：置信度 ≥ 0.85
+        - suspected（疑似）：置信度 0.60-0.85，返回Top 2-3候选疾病
+        - unlikely（未知）：置信度 < 0.60，VLM兜底描述
+
+      operationId: diagnose
+      tags:
+        - Diagnosis
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - image
+              properties:
+                image:
+                  type: string
+                  format: binary
+                  description: 图片文件（支持JPG/PNG/HEIC格式，最大10MB）
+                flower_genus:
+                  type: string
+                  description: 花卉种属（可选，提供后可提高诊断准确率）
+                  enum: [Rosa, Prunus, Tulipa, Dianthus, Paeonia]
+                  example: Rosa
+      responses:
+        '200':
+          description: 诊断成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DiagnosisResponse'
+              example:
+                diagnosis_id: "diag_20250111_001"
+                timestamp: "2025-01-11T14:30:00Z"
+                status: "confirmed"
+                confirmed_disease:
+                  disease_id: "rose_black_spot"
+                  disease_name: "玫瑰黑斑病"
+                  common_name_en: "Black Spot"
+                  pathogen: "Diplocarpon rosae"
+                  confidence: 0.92
+                feature_vector:
+                  content_type: "plant"
+                  plant_category: "flower"
+                  flower_genus: "Rosa"
+                  organ: "leaf"
+                  completeness: "intact"
+                  has_abnormality: "yes"
+                  symptom_type: "spot"
+                  colors: ["black", "brown"]
+                  location: "leaf_surface"
+                  size: "medium"
+                  distribution: "scattered"
+                scores:
+                  total_score: 92
+                  major_features: {"spot_color": 30, "spot_shape": 25}
+                  minor_features: {"leaf_yellowing": 15}
+                  optional_features: {"stem_affected": 5}
+                reasoning:
+                  - "检测到叶片表面黑色斑点（主要特征匹配）"
+                  - "斑点呈圆形，边缘清晰（形态匹配）"
+                  - "叶片周围伴有轻微黄化（次要特征）"
+                vlm_provider: "qwen_vl"
+                execution_time_ms: 2340
+        '400':
+          description: 请求错误（图片格式不支持、文件过大、参数错误等）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "invalid_image_format"
+                detail: "图片格式不支持，仅支持JPG/PNG/HEIC格式"
+                timestamp: "2025-01-11T14:30:00Z"
+        '401':
+          description: 未授权（API Key无效或缺失）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "unauthorized"
+                detail: "API Key无效或已过期"
+                timestamp: "2025-01-11T14:30:00Z"
+        '500':
+          description: 服务器错误（VLM调用失败、知识库加载失败等）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "vlm_service_error"
+                detail: "VLM服务暂时不可用，请稍后重试"
+                timestamp: "2025-01-11T14:30:00Z"
+
+  /diseases:
+    get:
+      summary: 获取疾病列表
+      description: |
+        查询知识库中的疾病信息。可按花卉种属过滤。
+
+        **当前支持的疾病数量**：18-24种
+        - Rosa：4-6种疾病
+        - Prunus：3-5种疾病
+        - Tulipa：3-5种疾病
+        - Dianthus：3-4种疾病
+        - Paeonia：3-4种疾病
+
+      operationId: listDiseases
+      tags:
+        - Knowledge
+      parameters:
+        - name: genus
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [Rosa, Prunus, Tulipa, Dianthus, Paeonia]
+          description: 按花卉属过滤疾病列表
+          example: Rosa
+        - name: pathogen_type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [fungal, bacterial, viral, pest]
+          description: 按病原体类型过滤（真菌/细菌/病毒/虫害）
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 100
+          description: 返回结果数量限制
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+          description: 分页偏移量
+      responses:
+        '200':
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    description: 总疾病数量
+                  diseases:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Disease'
+              example:
+                total: 5
+                diseases:
+                  - disease_id: "rose_black_spot"
+                    disease_name: "玫瑰黑斑病"
+                    common_name_en: "Black Spot"
+                    pathogen: "Diplocarpon rosae"
+                    pathogen_type: "fungal"
+                    affected_plants: ["Rosa"]
+                    typical_symptoms:
+                      - "叶片出现黑色圆形斑点"
+                      - "斑点周围伴有黄化"
+                      - "严重时叶片脱落"
+                  - disease_id: "rose_powdery_mildew"
+                    disease_name: "玫瑰白粉病"
+                    common_name_en: "Powdery Mildew"
+                    pathogen: "Podosphaera pannosa"
+                    pathogen_type: "fungal"
+                    affected_plants: ["Rosa"]
+                    typical_symptoms:
+                      - "叶片、茎秆出现白色粉状物"
+                      - "叶片卷曲变形"
+        '400':
+          description: 请求参数错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 服务器错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /admin/reload:
+    post:
+      summary: 重载知识库
+      description: |
+        重新加载知识库数据（疾病本体、特征向量、鉴别规则）。
+
+        **触发时机**：
+        - 管理员通过Streamlit后台添加新疾病
+        - 知识库文件更新后需要热加载
+        - 系统启动时自动调用
+
+        **注意事项**：
+        - 重载期间（约1-3秒）诊断服务不可用
+        - 重载失败会保留旧版本知识库
+
+      operationId: reloadKnowledge
+      tags:
+        - Admin
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: 重载成功
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - message
+                  - version
+                  - disease_count
+                  - reload_time_ms
+                properties:
+                  message:
+                    type: string
+                    description: 成功消息
+                    example: "知识库重载成功"
+                  version:
+                    type: string
+                    description: 知识库版本号（时间戳）
+                    example: "v20250111_143000"
+                  disease_count:
+                    type: integer
+                    description: 加载的疾病数量
+                    example: 22
+                  genus_coverage:
+                    type: array
+                    description: 覆盖的花卉种属列表
+                    items:
+                      type: string
+                    example: ["Rosa", "Prunus", "Tulipa", "Dianthus", "Paeonia"]
+                  reload_time_ms:
+                    type: integer
+                    description: 重载耗时（毫秒）
+                    example: 1250
+        '401':
+          description: 未授权
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 重载失败
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "knowledge_base_load_error"
+                detail: "知识库文件损坏或格式错误，已回滚到旧版本"
+                timestamp: "2025-01-11T14:30:00Z"
+
+  /auth/login:
+    post:
+      summary: 管理员登录
+      description: |
+        管理后台登录认证，返回JWT Token。
+
+        **默认管理员账户**：
+        - 用户名：admin
+        - 密码：通过环境变量配置（ADMIN_PASSWORD）
+
+        **Token有效期**：24小时
+
+      operationId: login
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                  description: 管理员用户名
+                  example: "admin"
+                password:
+                  type: string
+                  format: password
+                  description: 管理员密码
+                  example: "your_secure_password"
+      responses:
+        '200':
+          description: 登录成功
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - access_token
+                  - token_type
+                  - expires_in
+                properties:
+                  access_token:
+                    type: string
+                    description: JWT访问令牌
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  token_type:
+                    type: string
+                    description: 令牌类型（固定为bearer）
+                    default: "bearer"
+                    example: "bearer"
+                  expires_in:
+                    type: integer
+                    description: 令牌过期时间（秒）
+                    example: 86400
+                  user_info:
+                    type: object
+                    description: 用户基本信息
+                    properties:
+                      username:
+                        type: string
+                        example: "admin"
+                      role:
+                        type: string
+                        example: "administrator"
+        '401':
+          description: 认证失败（用户名或密码错误）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "authentication_failed"
+                detail: "用户名或密码错误"
+                timestamp: "2025-01-11T14:30:00Z"
+        '500':
+          description: 服务器错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /history:
+    get:
+      summary: 查询诊断历史
+      description: |
+        查询历史诊断记录，支持多维度筛选。
+
+        **数据存储**：
+        - 诊断记录存储在PostgreSQL（结构化数据）
+        - 图片存储在本地文件系统（backend/storage/images/）
+        - 数据保留周期：1年
+
+      operationId: getDiagnosisHistory
+      tags:
+        - Diagnosis
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: start_date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: 起始日期（ISO 8601格式）
+          example: "2025-01-01"
+        - name: end_date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: 结束日期（ISO 8601格式）
+          example: "2025-01-31"
+        - name: plant_genus
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [Rosa, Prunus, Tulipa, Dianthus, Paeonia]
+          description: 按花卉种属过滤
+        - name: confidence_level
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [confirmed, suspected, unlikely]
+          description: 按置信度级别过滤
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+          description: 返回结果数量限制
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+          description: 分页偏移量
+      responses:
+        '200':
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    description: 符合条件的总记录数
+                  records:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DiagnosisHistory'
+              example:
+                total: 150
+                records:
+                  - diagnosis_id: "diag_20250111_001"
+                    timestamp: "2025-01-11T14:30:00Z"
+                    plant_genus: "Rosa"
+                    status: "confirmed"
+                    disease_name: "玫瑰黑斑病"
+                    confidence: 0.92
+                    image_url: "/storage/images/unlabeled/diag_20250111_001.jpg"
+        '401':
+          description: 未授权
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 服务器错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: |
+        API密钥认证（未来实现）
+
+        目前仅用于管理接口（/admin/reload）和历史查询（/history），
+        诊断接口（/diagnose）暂不启用认证。
+
+  schemas:
+    DiagnosisResponse:
+      type: object
+      required:
+        - diagnosis_id
+        - timestamp
+        - status
+        - feature_vector
+        - vlm_provider
+        - execution_time_ms
+      properties:
+        diagnosis_id:
+          type: string
+          description: 诊断唯一标识符（格式：diag_YYYYMMDD_序号）
+          example: "diag_20250111_001"
+        timestamp:
+          type: string
+          format: date-time
+          description: 诊断时间戳（ISO 8601格式）
+          example: "2025-01-11T14:30:00Z"
+        status:
+          type: string
+          enum: [confirmed, suspected, unlikely]
+          description: |
+            诊断状态：
+            - confirmed：确诊（置信度 ≥ 0.85）
+            - suspected：疑似（置信度 0.60-0.85）
+            - unlikely：未知（置信度 < 0.60）
+          example: "confirmed"
+        confirmed_disease:
+          $ref: '#/components/schemas/DiagnosedDisease'
+          description: 确诊疾病信息（status=confirmed时存在）
+        suspected_diseases:
+          type: array
+          description: 疑似疾病列表（status=suspected时存在，Top 2-3候选）
+          items:
+            $ref: '#/components/schemas/DiagnosedDisease'
+        feature_vector:
+          $ref: '#/components/schemas/FeatureVector'
+          description: VLM提取的特征向量（Q0-Q6问诊结果）
+        scores:
+          type: object
+          description: 特征匹配得分详情
+          required:
+            - total_score
+            - major_features
+            - minor_features
+            - optional_features
+          properties:
+            total_score:
+              type: number
+              format: float
+              description: 总分（0-100）
+              example: 92.5
+            major_features:
+              type: object
+              description: 主要特征得分（30分权重 × N个）
+              additionalProperties:
+                type: number
+              example:
+                spot_color: 30
+                spot_shape: 25
+            minor_features:
+              type: object
+              description: 次要特征得分（15分权重 × N个）
+              additionalProperties:
+                type: number
+              example:
+                leaf_yellowing: 15
+            optional_features:
+              type: object
+              description: 可选特征得分（5分权重 × N个）
+              additionalProperties:
+                type: number
+              example:
+                stem_affected: 5
+        reasoning:
+          type: array
+          description: 诊断推理过程（人类可读的逻辑链）
+          items:
+            type: string
+          example:
+            - "检测到叶片表面黑色斑点（主要特征匹配）"
+            - "斑点呈圆形，边缘清晰（形态匹配）"
+            - "叶片周围伴有轻微黄化（次要特征）"
+        candidates:
+          type: array
+          description: 所有候选疾病及其分数（调试用）
+          items:
+            type: object
+            properties:
+              disease_name:
+                type: string
+              score:
+                type: number
+              confidence:
+                type: number
+          example:
+            - disease_name: "玫瑰黑斑病"
+              score: 92.5
+              confidence: 0.92
+            - disease_name: "玫瑰褐斑病"
+              score: 65.0
+              confidence: 0.65
+        vlm_provider:
+          type: string
+          description: 使用的VLM服务提供商
+          enum: [qwen_vl, gemini, doubao, glm_4v, grok_vision]
+          example: "qwen_vl"
+        execution_time_ms:
+          type: integer
+          description: 诊断总耗时（毫秒，包括VLM调用和知识库匹配）
+          example: 2340
+
+    DiagnosedDisease:
+      type: object
+      required:
+        - disease_id
+        - disease_name
+        - confidence
+      properties:
+        disease_id:
+          type: string
+          description: 疾病唯一标识符
+          example: "rose_black_spot"
+        disease_name:
+          type: string
+          description: 疾病中文名
+          example: "玫瑰黑斑病"
+        common_name_en:
+          type: string
+          description: 疾病英文名
+          example: "Black Spot"
+        pathogen:
+          type: string
+          description: 病原体名称
+          example: "Diplocarpon rosae"
+        confidence:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: 诊断置信度（0-1）
+          example: 0.92
+
+    FeatureVector:
+      type: object
+      description: |
+        VLM提取的特征向量（Q0-Q6问诊序列结果）
+
+        **Q0: 逐级过滤**
+        - Q0.0: content_type（内容类型识别）
+        - Q0.1: plant_category（植物类别识别）
+        - Q0.2: flower_genus（花卉种属识别）
+        - Q0.3: organ（器官识别）
+        - Q0.4: completeness（完整性检查）
+        - Q0.5: has_abnormality（异常判断）
+
+        **Q1-Q6: 症状特征提取**
+        - Q1: symptom_type（症状类型）
+        - Q2: colors（颜色特征）
+        - Q3: location（位置特征）
+        - Q4: size（大小特征）
+        - Q5: distribution（分布特征）
+        - Q6: （预留扩展）
+
+      required:
+        - content_type
+        - plant_category
+        - has_abnormality
+      properties:
+        content_type:
+          type: string
+          enum: [plant, non_plant, unclear]
+          description: 内容类型（Q0.0）
+          example: "plant"
+        plant_category:
+          type: string
+          enum: [flower, tree, grass, vegetable, other, unclear]
+          description: 植物类别（Q0.1）
+          example: "flower"
+        flower_genus:
+          type: string
+          description: 花卉种属（Q0.2，Genus级别）
+          example: "Rosa"
+        organ:
+          type: string
+          enum: [leaf, flower, stem, root, multiple, unclear]
+          description: 植物器官（Q0.3）
+          example: "leaf"
+        completeness:
+          type: string
+          enum: [intact, partial, unclear]
+          description: 完整性（Q0.4）
+          example: "intact"
+        has_abnormality:
+          type: string
+          enum: ["yes", "no", "unclear"]
+          description: 是否有异常（Q0.5）
+          example: "yes"
+        symptom_type:
+          type: string
+          enum: [spot, wilting, discoloration, deformation, pest, mold, other]
+          description: 症状类型（Q1）
+          example: "spot"
+        colors:
+          type: array
+          description: 病症颜色（Q2，多值）
+          items:
+            type: string
+          example: ["black", "brown"]
+        location:
+          type: string
+          description: 病症位置（Q3）
+          example: "leaf_surface"
+        size:
+          type: string
+          enum: [small, medium, large, unclear]
+          description: 病症大小（Q4）
+          example: "medium"
+        distribution:
+          type: string
+          enum: [scattered, clustered, edge, center, uniform, unclear]
+          description: 病症分布（Q5）
+          example: "scattered"
+
+    Disease:
+      type: object
+      required:
+        - disease_id
+        - disease_name
+        - pathogen
+        - affected_plants
+      properties:
+        disease_id:
+          type: string
+          description: 疾病唯一标识符（格式：<genus>_<disease_name_en>）
+          example: "rose_black_spot"
+        disease_name:
+          type: string
+          description: 疾病中文名
+          example: "玫瑰黑斑病"
+        common_name_en:
+          type: string
+          description: 疾病英文名
+          example: "Black Spot"
+        pathogen:
+          type: string
+          description: 病原体名称（拉丁学名）
+          example: "Diplocarpon rosae"
+        pathogen_type:
+          type: string
+          enum: [fungal, bacterial, viral, pest]
+          description: 病原体类型
+          example: "fungal"
+        affected_plants:
+          type: array
+          description: 受影响的植物属（Genus级别）
+          items:
+            type: string
+          example: ["Rosa"]
+        typical_symptoms:
+          type: array
+          description: 典型症状描述列表
+          items:
+            type: string
+          example:
+            - "叶片出现黑色圆形斑点"
+            - "斑点周围伴有黄化"
+            - "严重时叶片脱落"
+        major_features:
+          type: array
+          description: 主要特征列表（诊断用，30分权重）
+          items:
+            type: object
+            properties:
+              feature_name:
+                type: string
+              feature_value:
+                type: string
+          example:
+            - feature_name: "spot_color"
+              feature_value: "black"
+            - feature_name: "spot_shape"
+              feature_value: "circular"
+        minor_features:
+          type: array
+          description: 次要特征列表（诊断用，15分权重）
+          items:
+            type: object
+            properties:
+              feature_name:
+                type: string
+              feature_value:
+                type: string
+        optional_features:
+          type: array
+          description: 可选特征列表（诊断用，5分权重）
+          items:
+            type: object
+            properties:
+              feature_name:
+                type: string
+              feature_value:
+                type: string
+
+    DiagnosisHistory:
+      type: object
+      description: 诊断历史记录
+      required:
+        - diagnosis_id
+        - timestamp
+        - status
+      properties:
+        diagnosis_id:
+          type: string
+          description: 诊断唯一标识符
+          example: "diag_20250111_001"
+        timestamp:
+          type: string
+          format: date-time
+          description: 诊断时间戳
+          example: "2025-01-11T14:30:00Z"
+        plant_genus:
+          type: string
+          description: 花卉种属
+          example: "Rosa"
+        status:
+          type: string
+          enum: [confirmed, suspected, unlikely]
+          description: 诊断状态
+          example: "confirmed"
+        disease_name:
+          type: string
+          description: 疾病名称（confirmed时为确诊疾病，suspected时为Top1候选）
+          example: "玫瑰黑斑病"
+        confidence:
+          type: number
+          format: float
+          description: 置信度
+          example: 0.92
+        image_url:
+          type: string
+          format: uri
+          description: 图片访问路径（相对路径）
+          example: "/storage/images/unlabeled/diag_20250111_001.jpg"
+        user_feedback:
+          type: string
+          enum: [correct, incorrect, null]
+          description: 用户反馈（通过Streamlit后台标注）
+          example: "correct"
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - detail
+        - timestamp
+      properties:
+        error:
+          type: string
+          description: 错误类型代码（machine-readable）
+          example: "invalid_image_format"
+        detail:
+          type: string
+          description: 错误详细信息（human-readable）
+          example: "图片格式不支持，仅支持JPG/PNG/HEIC格式"
+        timestamp:
+          type: string
+          format: date-time
+          description: 错误发生时间戳
+          example: "2025-01-11T14:30:00Z"
+        request_id:
+          type: string
+          description: 请求追踪ID（可选，用于日志关联）
+          example: "req_abc123xyz"

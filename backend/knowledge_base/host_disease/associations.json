@@ -1,0 +1,225 @@
+{
+  "version": "1.0",
+  "description": "宿主-疾病关系本体库 - 定义植物属与疾病的关联关系",
+  "last_updated": "2025-11-12",
+  "changelog": {
+    "v1.0": "初始版本，包含Rosa和Prunus的疾病关联关系"
+  },
+
+  "_comment": "宿主-疾病关联关系用于Q0.2花卉种属识别后的候选疾病剪枝，减少匹配范围",
+
+  "associations": [
+    {
+      "host_genus": "Rosa",
+      "genus_name": "蔷薇属",
+      "genus_name_en": "Rose",
+      "family": "Rosaceae",
+      "family_name": "蔷薇科",
+      "diseases": [
+        {
+          "disease_id": "rose_black_spot",
+          "disease_name": "玫瑰黑斑病",
+          "common_name_en": "Rose Black Spot",
+          "pathogen": "Diplocarpon rosae",
+          "specificity": "genus",
+          "prevalence": "common",
+          "notes": "最常见的玫瑰叶部病害，温暖潮湿季节高发"
+        },
+        {
+          "disease_id": "rose_powdery_mildew",
+          "disease_name": "玫瑰白粉病",
+          "common_name_en": "Rose Powdery Mildew",
+          "pathogen": "Podosphaera pannosa",
+          "specificity": "genus",
+          "prevalence": "common",
+          "notes": "春季和秋季高发，干燥温暖条件下易发病（v1.1+扩展）"
+        },
+        {
+          "disease_id": "rose_rust",
+          "disease_name": "玫瑰锈病",
+          "common_name_en": "Rose Rust",
+          "pathogen": "Phragmidium spp.",
+          "specificity": "genus",
+          "prevalence": "occasional",
+          "notes": "春季多雨季节发生，叶背橙色脓疱（v1.1+扩展）"
+        },
+        {
+          "disease_id": "rose_downy_mildew",
+          "disease_name": "玫瑰霜霉病",
+          "common_name_en": "Rose Downy Mildew",
+          "pathogen": "Peronospora sparsa",
+          "specificity": "genus",
+          "prevalence": "occasional",
+          "notes": "保护地栽培高发，叶背灰色霉层（v1.1+扩展）"
+        }
+      ]
+    },
+    {
+      "host_genus": "Prunus",
+      "genus_name": "樱属/李属",
+      "genus_name_en": "Cherry/Plum",
+      "family": "Rosaceae",
+      "family_name": "蔷薇科",
+      "diseases": [
+        {
+          "disease_id": "cherry_powdery_mildew",
+          "disease_name": "樱桃白粉病",
+          "common_name_en": "Cherry Powdery Mildew",
+          "pathogen": "Podosphaera clandestina",
+          "specificity": "genus",
+          "prevalence": "common",
+          "notes": "春季和初夏高发，叶片白色粉状覆盖物"
+        },
+        {
+          "disease_id": "cherry_brown_rot",
+          "disease_name": "樱桃褐腐病",
+          "common_name_en": "Brown Rot",
+          "pathogen": "Monilinia fructicola",
+          "specificity": "genus",
+          "prevalence": "common",
+          "notes": "主要危害果实，果实褐色腐烂（v1.1+扩展）"
+        },
+        {
+          "disease_id": "cherry_leaf_spot",
+          "disease_name": "樱桃叶斑病",
+          "common_name_en": "Cherry Leaf Spot",
+          "pathogen": "Blumeriella jaapii",
+          "specificity": "genus",
+          "prevalence": "occasional",
+          "notes": "叶片紫色斑点，后期穿孔（v1.1+扩展）"
+        }
+      ]
+    },
+    {
+      "host_genus": "Tulipa",
+      "genus_name": "郁金香属",
+      "genus_name_en": "Tulip",
+      "family": "Liliaceae",
+      "family_name": "百合科",
+      "diseases": [
+        {
+          "disease_id": "tulip_fire",
+          "disease_name": "郁金香灰霉病",
+          "common_name_en": "Tulip Fire",
+          "pathogen": "Botrytis tulipae",
+          "specificity": "species",
+          "prevalence": "common",
+          "notes": "叶片和花朵灰色霉层，坏死斑点（v1.2+扩展）"
+        },
+        {
+          "disease_id": "tulip_breaking_virus",
+          "disease_name": "郁金香碎色病毒",
+          "common_name_en": "Tulip Breaking Virus",
+          "pathogen": "Tulip Breaking Virus (TBV)",
+          "specificity": "genus",
+          "prevalence": "occasional",
+          "notes": "花瓣条纹或斑驳，病毒病（v1.2+扩展）"
+        }
+      ]
+    },
+    {
+      "host_genus": "Dianthus",
+      "genus_name": "石竹属",
+      "genus_name_en": "Carnation/Pink",
+      "family": "Caryophyllaceae",
+      "family_name": "石竹科",
+      "diseases": [
+        {
+          "disease_id": "carnation_fusarium_wilt",
+          "disease_name": "康乃馨枯萎病",
+          "common_name_en": "Fusarium Wilt",
+          "pathogen": "Fusarium oxysporum f. sp. dianthi",
+          "specificity": "species",
+          "prevalence": "common",
+          "notes": "茎基部维管束变褐，植株萎蔫（v1.2+扩展）"
+        },
+        {
+          "disease_id": "carnation_rust",
+          "disease_name": "康乃馨锈病",
+          "common_name_en": "Carnation Rust",
+          "pathogen": "Uromyces dianthi",
+          "specificity": "genus",
+          "prevalence": "occasional",
+          "notes": "叶片和茎上锈色脓疱（v1.2+扩展）"
+        }
+      ]
+    },
+    {
+      "host_genus": "Paeonia",
+      "genus_name": "芍药属/牡丹属",
+      "genus_name_en": "Peony",
+      "family": "Paeoniaceae",
+      "family_name": "芍药科",
+      "diseases": [
+        {
+          "disease_id": "peony_botrytis_blight",
+          "disease_name": "牡丹灰霉病",
+          "common_name_en": "Peony Botrytis Blight",
+          "pathogen": "Botrytis paeoniae",
+          "specificity": "genus",
+          "prevalence": "common",
+          "notes": "茎叶和花朵灰色霉层，组织腐烂（v1.2+扩展）"
+        },
+        {
+          "disease_id": "peony_leaf_blotch",
+          "disease_name": "牡丹叶斑病",
+          "common_name_en": "Peony Leaf Blotch",
+          "pathogen": "Cladosporium paeoniae",
+          "specificity": "genus",
+          "prevalence": "occasional",
+          "notes": "叶片紫褐色大斑块（v1.2+扩展）"
+        }
+      ]
+    }
+  ],
+
+  "statistics": {
+    "_comment": "知识库统计信息",
+    "total_hosts": 5,
+    "total_diseases": 13,
+    "diseases_by_prevalence": {
+      "common": 6,
+      "occasional": 7,
+      "rare": 0
+    },
+    "diseases_by_specificity": {
+      "genus": 10,
+      "species": 3,
+      "family": 0
+    },
+    "mvp_implemented_hosts": 2,
+    "mvp_implemented_diseases": 2,
+    "mvp_diseases": ["rose_black_spot", "cherry_powdery_mildew"]
+  },
+
+  "extension_notes": {
+    "_comment": "知识库扩展说明",
+    "v1.0_scope": "仅实现Rose Black Spot和Cherry Powdery Mildew两种疾病的完整JSON",
+    "v1.1_scope": "扩展至Rosa和Prunus的所有常见疾病（4-6种）",
+    "v1.2_scope": "扩展至Tulipa、Dianthus、Paeonia的常见疾病（每种花卉2-3种疾病）",
+    "disease_addition_workflow": [
+      "1. 创建疾病JSON文件（backend/knowledge_base/diseases/{disease_id}.json）",
+      "2. 更新associations.json（添加宿主-疾病关联）",
+      "3. 测试验证（确保JSON Schema验证通过，Pydantic解析无误）",
+      "4. 提交Git"
+    ],
+    "host_addition_workflow": [
+      "1. 在associations数组中添加新的宿主条目",
+      "2. 添加该宿主的常见疾病（至少2-3种）",
+      "3. 创建对应的疾病JSON文件",
+      "4. 更新statistics统计信息",
+      "5. 提交Git"
+    ]
+  },
+
+  "usage_notes": {
+    "_comment": "使用说明",
+    "purpose": "用于Q0.2花卉种属识别后的候选疾病剪枝",
+    "workflow": [
+      "1. Q0.2识别出花卉种属（如Rosa）",
+      "2. 查询associations.json获取该属的所有疾病列表",
+      "3. 使用疾病列表进行特征匹配（减少匹配范围，提高效率）"
+    ],
+    "example": "如果Q0.2识别为Rosa，则只匹配rose_black_spot、rose_powdery_mildew、rose_rust、rose_downy_mildew四种疾病"
+  }
+}

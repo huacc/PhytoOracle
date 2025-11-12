@@ -1,0 +1,165 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Feature Ontology Schema",
+  "description": "特征本体JSON Schema定义，用于验证特征维度和模糊匹配规则的格式",
+  "type": "object",
+  "required": ["version", "dimensions"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+$",
+      "description": "特征本体版本号，格式：主版本.次版本（如1.0）"
+    },
+    "dimensions": {
+      "type": "object",
+      "description": "特征维度定义，包含所有可用的特征维度和取值范围",
+      "properties": {
+        "symptom_type": {
+          "type": "object",
+          "description": "症状类型维度（如necrosis_spot、chlorosis_spot、powdery_coating）",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["enum"],
+              "description": "维度类型（枚举类型）"
+            },
+            "values": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "症状类型可选值列表"
+            },
+            "description": {
+              "type": "string",
+              "description": "维度描述"
+            }
+          }
+        },
+        "color_center": {
+          "type": "object",
+          "description": "症状中心颜色维度",
+          "properties": {
+            "type": {"type": "string"},
+            "values": {
+              "type": "array",
+              "items": {"type": "string"}
+            },
+            "description": {"type": "string"}
+          }
+        },
+        "color_border": {
+          "type": "object",
+          "description": "症状边缘颜色维度",
+          "properties": {
+            "type": {"type": "string"},
+            "values": {
+              "type": "array",
+              "items": {"type": "string"}
+            },
+            "description": {"type": "string"}
+          }
+        },
+        "location": {
+          "type": "object",
+          "description": "症状位置维度（如lamina、petiole、petal）",
+          "properties": {
+            "type": {"type": "string"},
+            "values": {
+              "type": "array",
+              "items": {"type": "string"}
+            },
+            "description": {"type": "string"}
+          }
+        },
+        "size": {
+          "type": "object",
+          "description": "症状大小维度（如small、medium、large）",
+          "properties": {
+            "type": {"type": "string"},
+            "order": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "大小顺序（用于模糊匹配）"
+            },
+            "visual_references": {
+              "type": "object",
+              "description": "视觉参考（如：small=<2mm，medium=2-5mm，large=>5mm）",
+              "additionalProperties": {"type": "string"}
+            }
+          }
+        },
+        "distribution": {
+          "type": "object",
+          "description": "症状分布模式维度（如scattered、clustered、random）",
+          "properties": {
+            "type": {"type": "string"},
+            "values": {
+              "type": "array",
+              "items": {"type": "string"}
+            },
+            "description": {"type": "string"}
+          }
+        }
+      },
+      "additionalProperties": {
+        "type": "object",
+        "description": "其他特征维度（动态扩展）"
+      }
+    },
+    "fuzzy_matching": {
+      "type": "object",
+      "description": "模糊匹配规则配置",
+      "properties": {
+        "color_aliases": {
+          "type": "object",
+          "description": "颜色别名映射（用于颜色模糊匹配）",
+          "additionalProperties": {
+            "type": "array",
+            "items": {"type": "string"}
+          }
+        },
+        "size_order": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "大小顺序列表（从小到大）"
+        },
+        "size_tolerance": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "大小容差（允许相邻N个级别匹配）"
+        }
+      },
+      "additionalProperties": true
+    },
+    "symptom_types": {
+      "type": "array",
+      "description": "症状类型枚举列表（带标签）",
+      "items": {
+        "type": "object",
+        "properties": {
+          "value": {"type": "string"},
+          "label": {"type": "string"},
+          "description": {"type": "string"}
+        }
+      }
+    },
+    "colors": {
+      "type": "object",
+      "description": "颜色组映射（用于颜色分类）",
+      "additionalProperties": {
+        "type": "array",
+        "items": {"type": "string"}
+      }
+    },
+    "sizes": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "大小级别列表"
+    },
+    "distribution_patterns": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "分布模式列表"
+    }
+  },
+  "additionalProperties": false
+}

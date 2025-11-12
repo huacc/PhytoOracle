@@ -1,0 +1,198 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Disease Ontology Schema",
+  "description": "疾病本体JSON Schema定义，用于验证疾病知识库JSON文件的格式和字段约束",
+  "type": "object",
+  "required": [
+    "version",
+    "disease_id",
+    "disease_name",
+    "feature_vector",
+    "feature_importance",
+    "diagnosis_rules"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+$",
+      "description": "知识库版本号，格式：主版本.次版本（如4.1）"
+    },
+    "disease_id": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 50,
+      "description": "疾病唯一标识符，格式：{genus}_{disease_name}（如rose_black_spot）"
+    },
+    "disease_name": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 100,
+      "description": "疾病中文名称（如玫瑰黑斑病）"
+    },
+    "common_name_en": {
+      "type": "string",
+      "description": "疾病英文通用名称（如Rose Black Spot）"
+    },
+    "pathogen": {
+      "type": "string",
+      "description": "病原体名称，格式：学名（病原体类型），如：Diplocarpon rosae（真菌）"
+    },
+    "feature_vector": {
+      "type": "object",
+      "description": "疾病特征向量，用于与VLM提取的特征进行匹配",
+      "properties": {
+        "symptom_type": {
+          "type": "string",
+          "description": "症状类型（如necrosis_spot、powdery_coating）"
+        },
+        "color_center": {
+          "type": ["string", "array"],
+          "description": "症状中心颜色（字符串或数组）"
+        },
+        "color_border": {
+          "type": ["string", "array"],
+          "description": "症状边缘颜色（字符串或数组）"
+        },
+        "location": {
+          "type": ["string", "array"],
+          "description": "症状发生位置（如lamina、petiole）"
+        },
+        "size": {
+          "type": "string",
+          "description": "症状大小（如small、medium、large）"
+        },
+        "distribution": {
+          "type": "string",
+          "description": "症状分布模式（如scattered、clustered、random）"
+        }
+      }
+    },
+    "feature_importance": {
+      "type": "object",
+      "description": "特征重要性权重配置，用于诊断匹配算法",
+      "properties": {
+        "major_features": {
+          "type": "object",
+          "description": "主要特征（权重0.8）",
+          "properties": {
+            "_weight": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "主要特征层级权重"
+            },
+            "features": {
+              "type": "array",
+              "description": "主要特征列表",
+              "items": {
+                "type": "object",
+                "required": ["dimension", "expected_values", "weight"],
+                "properties": {
+                  "dimension": {
+                    "type": "string",
+                    "description": "特征维度名称（如symptom_type、color_center）"
+                  },
+                  "expected_values": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "该维度的期望值列表"
+                  },
+                  "weight": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "该特征在主要特征中的权重"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "特征描述"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "minor_features": {
+          "type": "object",
+          "description": "次要特征（权重0.15）"
+        },
+        "optional_features": {
+          "type": "object",
+          "description": "可选特征（权重0.05）"
+        }
+      }
+    },
+    "diagnosis_rules": {
+      "type": "object",
+      "description": "诊断规则配置",
+      "properties": {
+        "confirmed": {
+          "type": "object",
+          "description": "确诊级别规则",
+          "properties": {
+            "criteria": {
+              "type": "array",
+              "description": "确诊标准列表",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "rule_id": {"type": "string"},
+                  "logic": {"type": "string"},
+                  "confidence": {"type": "number"},
+                  "description": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "suspected": {
+          "type": "object",
+          "description": "疑似级别规则",
+          "properties": {
+            "criteria": {
+              "type": "array",
+              "description": "疑似标准列表",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "rule_id": {"type": "string"},
+                  "logic": {"type": "string"},
+                  "confidence": {"type": "number"},
+                  "description": {"type": "string"}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "visual_descriptions": {
+      "type": "object",
+      "description": "视觉描述，用于VLM识别指导",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "host_plants": {
+      "type": "array",
+      "description": "宿主植物属名列表（如[\"Rosa\", \"Prunus\"]）",
+      "items": {"type": "string"}
+    },
+    "typical_symptoms": {
+      "type": "array",
+      "description": "典型症状描述列表",
+      "items": {"type": "string"}
+    },
+    "environmental_conditions": {
+      "type": "object",
+      "description": "发病环境条件",
+      "additionalProperties": true
+    },
+    "prevention_measures": {
+      "type": "array",
+      "description": "防治措施列表",
+      "items": {"type": "string"}
+    }
+  },
+  "additionalProperties": false
+}

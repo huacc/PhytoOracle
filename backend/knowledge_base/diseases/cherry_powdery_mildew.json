@@ -1,0 +1,125 @@
+{
+  "version": "4.1",
+  "disease_id": "cherry_powdery_mildew",
+  "disease_name": "樱桃白粉病",
+  "common_name_en": "Cherry Powdery Mildew",
+  "pathogen": "Podosphaera clandestina（真菌）",
+
+  "feature_vector": {
+    "symptom_type": "powdery_coating",
+    "color_center": ["white", "grayish_white"],
+    "color_border": ["no_special"],
+    "location": ["lamina", "shoot", "fruit"],
+    "size": "medium",
+    "distribution": "scattered"
+  },
+
+  "feature_importance": {
+    "major_features": {
+      "_weight": 0.8,
+      "features": [
+        {
+          "dimension": "symptom_type",
+          "expected_values": ["powdery_coating"],
+          "weight": 0.5,
+          "description": "白色粉状覆盖物是Powdery Mildew的KEY诊断特征"
+        },
+        {
+          "dimension": "color_center",
+          "expected_values": ["white", "grayish_white"],
+          "weight": 0.3,
+          "description": "白色是白粉病的核心颜色特征"
+        }
+      ]
+    },
+    "minor_features": {
+      "_weight": 0.15,
+      "features": [
+        {
+          "dimension": "location",
+          "expected_values": ["lamina", "shoot", "fruit"],
+          "weight": 0.1,
+          "description": "最常出现在叶片主体，也可能在嫩梢和果实"
+        },
+        {
+          "dimension": "additional_leaf_curling",
+          "expected_values": ["upward"],
+          "weight": 0.05,
+          "description": "叶片向上卷曲是白粉病的典型附加症状"
+        }
+      ]
+    },
+    "optional_features": {
+      "_weight": 0.05,
+      "features": [
+        {
+          "dimension": "size",
+          "expected_values": ["small", "medium", "large"],
+          "weight": 0.03,
+          "description": "斑块大小随病程发展变化"
+        },
+        {
+          "dimension": "coverage",
+          "expected_values": ["light", "moderate", "severe"],
+          "weight": 0.02,
+          "description": "覆盖度随感染程度变化"
+        }
+      ]
+    }
+  },
+
+  "diagnosis_rules": {
+    "confirmed": [
+      {
+        "rule_id": "R1",
+        "logic": "major_features >= 2/2",
+        "confidence": 0.95,
+        "description": "主要特征全部匹配（powdery_coating + white）"
+      },
+      {
+        "rule_id": "R2",
+        "logic": "major_features >= 1/2 AND minor_features >= 2/2",
+        "confidence": 0.85,
+        "description": "1个主要特征 + 所有次要特征匹配"
+      }
+    ],
+    "suspected": [
+      {
+        "rule_id": "S1",
+        "logic": "major_features >= 1/2 AND minor_features >= 1/2",
+        "confidence": 0.70,
+        "description": "1个主要特征 + 至少1个次要特征匹配"
+      },
+      {
+        "rule_id": "S2",
+        "logic": "major_features >= 1/2",
+        "confidence": 0.60,
+        "description": "至少1个主要特征匹配"
+      }
+    ]
+  },
+
+  "visual_descriptions": {
+    "overall": "叶片表面被白色粉状物覆盖，【关键特征】像撒了一层白色面粉或棉絮状的白色霉层，叶片通常向上卷曲，新叶变小且苍白",
+    "symptom_type": "白色粉状覆盖物，像叶片表面被撒了白色面粉，形成白色棉絮状或毡状覆盖物",
+    "color_center": "纯白色或微带灰白色，像棉花、面粉、或白色粉笔的颜色",
+    "leaf_curling": "叶片边缘向上翘起，像勺子或小船的形状，凹面向上",
+    "early_stage": "小的圆形粉状斑块，主要在叶片下表面，卷曲不明显",
+    "middle_stage": "斑块扩大，叶片向上卷曲明显，新叶变小",
+    "late_stage": "覆盖整片叶，出现黑色闭囊壳，叶片严重扭曲脱落",
+    "differential_vs_downy_mildew": "白粉病是白色粉状物，霜霉病是灰色绒毛状",
+    "differential_vs_black_spot": "白粉病是白色覆盖物，黑斑病是黑色坏死斑点",
+    "differential_vs_rust": "白粉病是白色粉状物，锈病是橙红色疱疹状突起"
+  },
+
+  "host_plants": ["Prunus"],
+
+  "typical_symptoms": [
+    "叶片表面被白色粉状物覆盖（KEY特征）",
+    "白色粉状物呈棉絮状或毡状（像撒了面粉）",
+    "叶片向上卷曲（边缘向上翘起，呈勺子状）",
+    "新叶变小且苍白",
+    "晚期出现黑色闭囊壳（有性繁殖结构）",
+    "果实感染时出现红色斑块和白色真菌"
+  ]
+}

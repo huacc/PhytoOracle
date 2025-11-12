@@ -1,0 +1,55 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Host-Disease Associations Schema",
+  "description": "宿主-疾病关系JSON Schema定义，用于验证植物属与疾病关联关系的格式",
+  "type": "object",
+  "required": ["version", "associations"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+$",
+      "description": "宿主-疾病关系版本号，格式：主版本.次版本（如1.0）"
+    },
+    "associations": {
+      "type": "array",
+      "description": "宿主-疾病关联关系列表",
+      "items": {
+        "type": "object",
+        "required": ["host_genus", "disease_id", "specificity"],
+        "properties": {
+          "host_genus": {
+            "type": "string",
+            "description": "宿主植物属名（学名，如Rosa、Prunus）"
+          },
+          "genus_name": {
+            "type": "string",
+            "description": "宿主植物属中文名（如蔷薇属、樱属）"
+          },
+          "genus_name_en": {
+            "type": "string",
+            "description": "宿主植物属英文名"
+          },
+          "disease_id": {
+            "type": "string",
+            "description": "关联的疾病ID（如rose_black_spot）"
+          },
+          "specificity": {
+            "type": "string",
+            "enum": ["species", "genus", "family"],
+            "description": "宿主特异性（物种级/属级/科级）"
+          },
+          "prevalence": {
+            "type": "string",
+            "enum": ["common", "occasional", "rare"],
+            "description": "发病率（常见/偶尔/罕见）"
+          },
+          "notes": {
+            "type": "string",
+            "description": "备注说明"
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

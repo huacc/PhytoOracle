@@ -1,0 +1,403 @@
+{
+  "version": "1.0",
+  "description": "PhytoOracle 特征本体库 - 定义所有可观察的植物病害特征维度和取值范围",
+  "last_updated": "2025-11-12",
+  "changelog": {
+    "v1.0": "初始版本，基于FlowerSpecialist v4.1适配到PhytoOracle架构"
+  },
+
+  "_comment": "特征本体定义所有VLM可观察的特征维度（dimensions）和模糊匹配规则（fuzzy_matching）",
+
+  "dimensions": {
+    "symptom_type": {
+      "type": "enum",
+      "description": "症状类型（基于植物病理学分类）",
+      "values": [
+        "necrosis_spot",
+        "necrosis_blotch",
+        "chlorosis",
+        "powdery_coating",
+        "downy_coating",
+        "rust_pustule",
+        "bacterial_spot"
+      ],
+      "value_definitions": {
+        "necrosis_spot": {
+          "cn_term": "坏死斑点",
+          "en_term": "Necrotic spot",
+          "pathology": "细胞死亡形成的局部病斑",
+          "vlm_description": "小型圆形或近圆形的褐色或黑色斑点，组织干燥、皱缩或塌陷，看起来像被烧焦或枯萎的部分",
+          "visual_metaphors": [
+            "像被香烟烫过留下的焦痕（圆形、褐黑色、边缘清晰）",
+            "像纸张被火星烧出的小洞边缘（褐色、干燥、微卷）",
+            "像苹果切开后氧化变褐的部分（但更干、更黑）"
+          ],
+          "size_range": "通常<10mm（小于1厘米）"
+        },
+        "necrosis_blotch": {
+          "cn_term": "坏死斑块",
+          "en_term": "Necrotic blotch",
+          "pathology": "大面积细胞死亡",
+          "vlm_description": "大型不规则形状的褐色或黑色斑块，组织干燥、皱缩，边缘可能有波浪状或锯齿状轮廓",
+          "visual_metaphors": [
+            "像被大面积烧焦的纸张（不规则边缘、褐黑色、开裂）",
+            "像旧皮鞋上的褪色斑块（不规则、干燥、颜色深浅不一）"
+          ],
+          "size_range": "通常>10mm（大于1厘米）"
+        },
+        "chlorosis": {
+          "cn_term": "失绿/黄化",
+          "en_term": "Chlorosis",
+          "pathology": "叶绿素丧失",
+          "vlm_description": "叶片失去绿色，变成黄色或黄绿色",
+          "visual_metaphors": ["像褪色的叶子，失去了鲜绿色"]
+        },
+        "powdery_coating": {
+          "cn_term": "白粉覆盖",
+          "en_term": "Powdery mildew",
+          "pathology": "真菌菌丝和孢子在叶表形成白色粉末",
+          "vlm_description": "叶片表面覆盖白色或灰白色粉末状物质，像撒了面粉",
+          "visual_metaphors": ["像撒了面粉、糖粉或滑石粉"],
+          "texture": "粉末状，可以擦掉"
+        },
+        "downy_coating": {
+          "cn_term": "霜霉覆盖",
+          "en_term": "Downy mildew",
+          "pathology": "卵菌在叶背形成绒毛状孢子囊",
+          "vlm_description": "叶片背面有灰白色绒毛状或棉絮状覆盖物",
+          "visual_metaphors": ["像细小的绒毛、棉絮或霉菌"],
+          "texture": "绒毛状，比白粉病更像棉絮"
+        },
+        "rust_pustule": {
+          "cn_term": "锈病脓疱",
+          "en_term": "Rust pustule",
+          "pathology": "真菌在叶片组织内形成孢子堆，破裂后释放锈色孢子",
+          "vlm_description": "叶片表面有突起的小水疱状结构，破裂后露出橙色、黄色或褐色的粉末状孢子",
+          "visual_metaphors": [
+            "像生锈的铁钉表面（橙色、粗糙、有粉末感）",
+            "像烫伤后起的小水泡（突起、圆形、可能破裂）",
+            "像金属表面的锈蚀斑点（橙黄色、粉末状、突起）"
+          ],
+          "size_range": "通常1-3mm直径的小脓疱（像米粒或小绿豆大小）"
+        },
+        "bacterial_spot": {
+          "cn_term": "细菌性斑点",
+          "en_term": "Bacterial spot",
+          "pathology": "细菌感染导致的坏死斑点，早期具有水渍状特征",
+          "vlm_description": "小型斑点，早期呈水渍状（湿润、半透明），后期变为褐色或黑色坏死斑，常有黄色晕圈",
+          "visual_metaphors": [
+            "像纸张被水滴打湿后的透明感（半透明、湿润）",
+            "像衣服上刚洒上水的湿痕（颜色变深、半透明）"
+          ],
+          "distinguishing_feature": "早期的水渍状外观是细菌性病害的关键特征",
+          "size_range": "small (<3mm)"
+        }
+      }
+    },
+
+    "color_center": {
+      "type": "enum",
+      "description": "症状中心颜色",
+      "values": ["black", "brown", "dark_brown", "yellow", "light_yellow", "purple", "white", "grayish_white", "orange", "rust"],
+      "value_definitions": {
+        "black": {
+          "cn_term": "黑色",
+          "en_term": "Black",
+          "hex_range": ["#000000", "#2F2F2F"],
+          "pathology": "严重坏死"
+        },
+        "brown": {
+          "cn_term": "褐色/棕色",
+          "en_term": "Brown",
+          "hex_range": ["#654321", "#A0522D"],
+          "pathology": "一般坏死"
+        },
+        "dark_brown": {
+          "cn_term": "深褐色",
+          "en_term": "Dark brown",
+          "hex_range": ["#3E2723", "#5D4037"],
+          "pathology": "较重坏死"
+        },
+        "yellow": {
+          "cn_term": "黄色",
+          "en_term": "Yellow",
+          "hex_range": ["#FFFF00", "#FFF68F"],
+          "pathology": "失绿/黄化"
+        },
+        "light_yellow": {
+          "cn_term": "浅黄色",
+          "en_term": "Light yellow",
+          "hex_range": ["#FFFACD", "#FAFAD2"],
+          "pathology": "轻度失绿"
+        },
+        "purple": {
+          "cn_term": "紫色",
+          "en_term": "Purple",
+          "hex_range": ["#800080", "#9370DB"],
+          "pathology": "某些真菌病害",
+          "note": "VLM可能将紫色描述为'深色'或'深褐色'"
+        },
+        "white": {
+          "cn_term": "白色",
+          "en_term": "White",
+          "hex_range": ["#FFFFFF", "#F0F0F0"],
+          "pathology": "白粉病等"
+        },
+        "grayish_white": {
+          "cn_term": "灰白色",
+          "en_term": "Grayish white",
+          "hex_range": ["#E0E0E0", "#D3D3D3"],
+          "pathology": "白粉病、霜霉病"
+        },
+        "orange": {
+          "cn_term": "橙色",
+          "en_term": "Orange",
+          "hex_range": ["#FFA500", "#FF8C00"],
+          "pathology": "锈病"
+        },
+        "rust": {
+          "cn_term": "锈色",
+          "en_term": "Rust",
+          "hex_range": ["#B7410E", "#CD5C5C"],
+          "pathology": "锈病"
+        }
+      }
+    },
+
+    "color_border": {
+      "type": "enum",
+      "description": "症状边缘颜色特征",
+      "values": ["no_special", "yellow", "light_yellow", "halo_yellow", "purple", "halo_purple"],
+      "value_definitions": {
+        "no_special": {
+          "cn_term": "无特殊边缘",
+          "en_term": "No special border",
+          "description": "边缘无特殊颜色，与中心颜色相同或直接过渡到健康组织"
+        },
+        "yellow": {
+          "cn_term": "黄色",
+          "en_term": "Yellow",
+          "description": "边缘为黄色"
+        },
+        "light_yellow": {
+          "cn_term": "浅黄色",
+          "en_term": "Light yellow",
+          "description": "边缘为浅黄色"
+        },
+        "halo_yellow": {
+          "cn_term": "黄色晕圈",
+          "en_term": "Yellow halo",
+          "description": "病斑周围有黄色晕染区域，像月亮周围的光晕"
+        },
+        "purple": {
+          "cn_term": "紫色",
+          "en_term": "Purple",
+          "description": "边缘为紫色或紫红色"
+        },
+        "halo_purple": {
+          "cn_term": "紫色晕圈",
+          "en_term": "Purple halo",
+          "description": "病斑周围有紫色晕染区域"
+        }
+      }
+    },
+
+    "location": {
+      "type": "enum",
+      "description": "症状发生的解剖位置",
+      "values": ["lamina", "vein", "margin", "petiole"],
+      "value_definitions": {
+        "lamina": {
+          "cn_term": "叶片/叶肉",
+          "en_term": "Lamina / Blade",
+          "definition": "叶子的扁平展开部分，主要进行光合作用",
+          "vlm_description": "叶子的主要绿色部分（不包括叶脉、边缘、叶柄）"
+        },
+        "vein": {
+          "cn_term": "叶脉",
+          "en_term": "Vein",
+          "definition": "叶片中的维管束系统",
+          "vlm_description": "叶子上的纹路、线条（像树枝一样的结构）"
+        },
+        "margin": {
+          "cn_term": "叶缘/边缘",
+          "en_term": "Margin",
+          "definition": "叶片的外围边缘",
+          "vlm_description": "叶子的边沿、边界"
+        },
+        "petiole": {
+          "cn_term": "叶柄",
+          "en_term": "Petiole",
+          "definition": "连接叶片与茎的柄状结构",
+          "vlm_description": "连接叶子和枝条的杆子"
+        }
+      }
+    },
+
+    "size": {
+      "type": "enum",
+      "description": "单个病斑大小（占叶片面积的百分比）",
+      "values": ["pinpoint", "small", "medium_small", "medium", "medium_large", "large"],
+      "value_definitions": {
+        "pinpoint": {
+          "cn_term": "针尖大小",
+          "en_term": "Pinpoint",
+          "percentage": "<0.5%",
+          "vlm_description": "占叶片面积不到0.5%，极小，几乎看不见的小点"
+        },
+        "small": {
+          "cn_term": "小型",
+          "en_term": "Small",
+          "percentage": "0.5-2%",
+          "vlm_description": "占叶片面积0.5-2%左右，清晰可见但很小"
+        },
+        "medium_small": {
+          "cn_term": "中小型",
+          "en_term": "Medium-small",
+          "percentage": "2-3%",
+          "vlm_description": "占叶片面积2-3%左右，介于小型和中型之间"
+        },
+        "medium": {
+          "cn_term": "中型",
+          "en_term": "Medium",
+          "percentage": "3-5%",
+          "vlm_description": "占叶片面积3-5%左右，明显但不算太大"
+        },
+        "medium_large": {
+          "cn_term": "中大型",
+          "en_term": "Medium-large",
+          "percentage": "5-8%",
+          "vlm_description": "占叶片面积5-8%左右，介于中型和大型之间"
+        },
+        "large": {
+          "cn_term": "大型",
+          "en_term": "Large",
+          "percentage": ">8%",
+          "vlm_description": "占叶片面积超过8%，明显的大斑块"
+        }
+      }
+    },
+
+    "distribution": {
+      "type": "enum",
+      "description": "症状的空间分布模式",
+      "values": ["scattered", "random", "clustered", "along_vein", "confluent"],
+      "value_definitions": {
+        "scattered": {
+          "cn_term": "散点分布",
+          "en_term": "Scattered",
+          "definition": "病斑随机分散，相互独立",
+          "vlm_description": "斑点零星分散，不聚集成团"
+        },
+        "random": {
+          "cn_term": "随机分布",
+          "en_term": "Random",
+          "definition": "随机分布，无明显规律",
+          "vlm_description": "斑点随机分布，无特定模式"
+        },
+        "clustered": {
+          "cn_term": "聚集分布",
+          "en_term": "Clustered",
+          "definition": "病斑聚集成群",
+          "vlm_description": "斑点聚集在一起，成团分布"
+        },
+        "along_vein": {
+          "cn_term": "沿叶脉",
+          "en_term": "Along vein",
+          "definition": "沿维管束扩散",
+          "vlm_description": "病变沿着叶脉（叶子上的线条）分布"
+        },
+        "confluent": {
+          "cn_term": "融合",
+          "en_term": "Confluent",
+          "definition": "多个病斑融合成大片区域",
+          "vlm_description": "斑点相互融合，形成大片病变"
+        }
+      }
+    },
+
+    "coverage": {
+      "type": "enum",
+      "description": "症状覆盖度（占叶片总面积的百分比）",
+      "values": ["minimal", "light", "moderate", "severe"],
+      "value_definitions": {
+        "minimal": {
+          "cn_term": "轻微",
+          "en_term": "Minimal",
+          "percentage": "<10%",
+          "vlm_description": "很少，覆盖不到10%"
+        },
+        "light": {
+          "cn_term": "轻度",
+          "en_term": "Light",
+          "percentage": "10-30%",
+          "vlm_description": "覆盖10-30%左右"
+        },
+        "moderate": {
+          "cn_term": "中度",
+          "en_term": "Moderate",
+          "percentage": "30-60%",
+          "vlm_description": "覆盖30-60%左右"
+        },
+        "severe": {
+          "cn_term": "重度",
+          "en_term": "Severe",
+          "percentage": "60-90%",
+          "vlm_description": "覆盖60-90%，大部分叶片受影响"
+        }
+      }
+    }
+  },
+
+  "fuzzy_matching": {
+    "_comment": "模糊匹配规则，用于特征匹配算法的容错处理",
+
+    "color_aliases": {
+      "_description": "颜色别名映射，用于颜色模糊匹配",
+      "deep_black": ["black", "dark_brown"],
+      "dark_color": ["black", "dark_brown", "brown"],
+      "yellowish": ["yellow", "light_yellow"],
+      "whitish": ["white", "grayish_white"],
+      "rusty": ["orange", "rust"]
+    },
+
+    "size_order": {
+      "_description": "大小顺序（从小到大），用于相邻尺寸匹配",
+      "order": ["pinpoint", "small", "medium_small", "medium", "medium_large", "large"]
+    },
+
+    "size_tolerance": {
+      "_description": "大小容差（允许相邻N个级别匹配）",
+      "value": 1,
+      "example": "如果期望值是medium，则medium_small和medium_large也可以匹配"
+    },
+
+    "synonym_mapping": {
+      "_description": "症状类型同义词映射",
+      "spot": ["necrosis_spot", "bacterial_spot"],
+      "coating": ["powdery_coating", "downy_coating"],
+      "pustule": ["rust_pustule"]
+    }
+  },
+
+  "symptom_types": [
+    {"value": "necrosis_spot", "label": "坏死斑点", "label_en": "Necrotic spot"},
+    {"value": "necrosis_blotch", "label": "坏死斑块", "label_en": "Necrotic blotch"},
+    {"value": "chlorosis", "label": "失绿/黄化", "label_en": "Chlorosis"},
+    {"value": "powdery_coating", "label": "白粉覆盖", "label_en": "Powdery mildew"},
+    {"value": "downy_coating", "label": "霜霉覆盖", "label_en": "Downy mildew"},
+    {"value": "rust_pustule", "label": "锈病脓疱", "label_en": "Rust pustule"},
+    {"value": "bacterial_spot", "label": "细菌性斑点", "label_en": "Bacterial spot"}
+  ],
+
+  "colors": {
+    "dark_group": ["black", "dark_brown", "brown"],
+    "light_group": ["white", "grayish_white", "light_yellow"],
+    "yellow_group": ["yellow", "light_yellow"],
+    "rust_group": ["orange", "rust"]
+  },
+
+  "sizes": ["pinpoint", "small", "medium_small", "medium", "medium_large", "large"],
+
+  "distribution_patterns": ["scattered", "random", "clustered", "along_vein", "confluent"]
+}

@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     # ==================== 数据库配置 ====================
     DB_HOST: str = Field(default="192.168.0.119", description="PostgreSQL 主机")
     DB_PORT: int = Field(default=5432, description="PostgreSQL 端口")
-    DB_NAME: str = Field(default="postgres", description="数据库名称")
+    DB_NAME: str = Field(default="phytooracle", description="数据库名称")
     DB_USER: str = Field(default="admin", description="数据库用户名")
     DB_PASSWORD: str = Field(default="123456", description="数据库密码")
     DB_POOL_MIN_SIZE: int = Field(default=5, description="连接池最小连接数")

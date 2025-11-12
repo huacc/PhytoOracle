@@ -24,3 +24,27 @@ RDF/OWL 在 MVP 阶段就是纯坑
 问题：全文档没一条“怎么算完成”。
 后果：做完一堆代码，你说“不行”，他说是“我按需求做了”，死循环。
 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~grok 检查~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+https://github.com/huacc/PhytoOracle/tree/main  你仔细看下这个项目，这个项目  P0阶段已经实施，且生成了实施报告 在 https://github.com/huacc/PhytoOracle/tree/main/docs/reports 目录下，另外你要看看P0 阶段是否有按照  https://github.com/huacc/PhytoOracle/blob/main/docs/plan/%E7%A0%94%E5%8F%91%E8%AE%A1%E5%88%92v1.0.md 和 https://github.com/huacc/PhytoOracle/blob/main/docs/design/%E8%AF%A6%E7%BB%86%E8%AE%BE%E8%AE%A1%E6%96%87%E6%A1%A3.md 设计文档实施，你可以查看history 提交的代码，所有都要基于MVP版本去思考，如果涉及到部署的你可以不用管因为都是在本地部署，github上没有。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
