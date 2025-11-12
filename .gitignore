@@ -36,6 +36,9 @@ env/
 # VS Code
 .vscode/
 
+# Claude Code
+.claude/
+
 # Pytest
 .pytest_cache/
 .coverage
