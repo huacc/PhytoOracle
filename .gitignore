@@ -1,0 +1,96 @@
+# ==================== Python ====================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv
+
+# PyCharm
+.idea/
+
+# VS Code
+.vscode/
+
+# Pytest
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# ==================== Sensitive Configuration ====================
+# ⚠️ IMPORTANT: Never commit these files with real API keys!
+backend/config/llm_config.json
+backend/.env
+.env
+*.key
+*.pem
+
+# ==================== Node.js / Frontend ====================
+node_modules/
+.next/
+out/
+.DS_Store
+*.tsbuildinfo
+next-env.d.ts
+
+# ==================== Logs ====================
+*.log
+logs/
+
+# ==================== Database ====================
+*.db
+*.sqlite
+*.sqlite3
+
+# ==================== Storage ====================
+# Local image storage (unlabeled/correct/incorrect images)
+backend/storage/images/unlabeled/
+backend/storage/images/correct/
+backend/storage/images/incorrect/
+
+# Keep directory structure but ignore contents
+!backend/storage/images/.gitkeep
+
+# ==================== Test outputs ====================
+backend/tests/storage_test/
+
+# ==================== Temporary files ====================
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+
+# ==================== OS ====================
+Thumbs.db
+.DS_Store

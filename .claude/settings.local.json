@@ -24,7 +24,16 @@
       "Bash(python:*)",
       "Bash(del:*)",
       "Bash(del \"docs\\design\\详细设计文档_5.6节_重构版.md\")",
-      "Bash(powershell:*)"
+      "Bash(powershell:*)",
+      "Bash(curl:*)",
+      "Bash($null)",
+      "Bash(move:*)",
+      "Bash(node --version:*)",
+      "Bash(copy:*)",
+      "Bash(if [ ! -d \"D:\\项目管理\\PhytoOracle\\backend\\config\" ])",
+      "Bash(then mkdir -p \"D:\\项目管理\\PhytoOracle\\backend\\config\")",
+      "Bash(fi)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []

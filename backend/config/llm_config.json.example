@@ -1,0 +1,91 @@
+{
+  "version": "2.0",
+  "update_date": "2025-11-12",
+  "active_provider": "qwen_vl",
+  "providers": {
+    "gemini": {
+      "name": "Google Gemini 2.0 Flash",
+      "model": "gemini-2.0-flash",
+      "api_key_env": "GEMINI_API_KEY",
+      "api_key": "YOUR_GEMINI_API_KEY_HERE",
+      "base_url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+      "cost_per_image": 0.0,
+      "daily_quota": 1500,
+      "timeout": 30,
+      "max_retries": 3,
+      "supports_multimodal": true,
+      "generation_config": {
+        "temperature": 0.4,
+        "topK": 32,
+        "topP": 1,
+        "maxOutputTokens": 2048
+      },
+      "notes": "免费且强大，推荐用于phase1和phase2"
+    },
+    "qwen_vl": {
+      "name": "通义千问 VL Plus",
+      "model": "qwen-vl-plus",
+      "api_key_env": "QWEN_API_KEY",
+      "api_key": "YOUR_QWEN_API_KEY_HERE",
+      "base_url": "https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation",
+      "cost_per_image": 0.0,
+      "daily_quota": 1000,
+      "timeout": 30,
+      "max_retries": 3,
+      "supports_multimodal": true,
+      "requires_proxy_disabled": true,
+      "notes": "国内服务器，需要禁用代理。备用VLM"
+    },
+    "doubao": {
+      "name": "豆包视觉版",
+      "model": "doubao-seed-1-6-vision-250815",
+      "api_key_env": "DOUBAO_API_KEY",
+      "api_key": "YOUR_DOUBAO_API_KEY_HERE",
+      "base_url": "https://ark.cn-beijing.volces.com/api/v3",
+      "cost_per_image": 0.015,
+      "daily_quota": null,
+      "timeout": 30,
+      "max_retries": 3,
+      "max_tokens": 1000,
+      "temperature": 0.7,
+      "supports_multimodal": true,
+      "notes": "付费VLM，用于超出免费额度时"
+    },
+    "glm_4v": {
+      "name": "智谱GLM-4V",
+      "model": "glm-4v",
+      "api_key_env": "GLM_API_KEY",
+      "api_key": "YOUR_GLM_API_KEY_HERE",
+      "base_url": "https://open.bigmodel.cn/api/paas/v4/chat/completions",
+      "cost_per_image": 0.0,
+      "daily_quota": 10000,
+      "timeout": 60,
+      "max_retries": 3,
+      "supports_multimodal": true,
+      "api_format": "openai_compatible",
+      "notes": "智谱AI提供，OpenAI兼容格式，免费额度高"
+    },
+    "grok_vision": {
+      "name": "xAI Grok Vision",
+      "model": "grok-2-vision-1212",
+      "api_key_env": "GROK_API_KEY",
+      "api_key": "YOUR_GROK_API_KEY_HERE",
+      "base_url": "https://api.x.ai/v1/chat/completions",
+      "cost_per_image": 0.0,
+      "daily_quota": null,
+      "timeout": 60,
+      "max_retries": 3,
+      "supports_multimodal": true,
+      "api_format": "openai_compatible",
+      "notes": "xAI Grok视觉模型，OpenAI兼容格式，支持本地图片base64编码"
+    }
+  },
+  "fallback_strategy": {
+    "enabled": true,
+    "order": [
+      "gemini",
+      "qwen_vl",
+      "doubao"
+    ]
+  }
+}
