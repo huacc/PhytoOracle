@@ -110,7 +110,7 @@ class ImageService:
 
         # 初始化LocalImageStorage
         try:
-            self.storage = LocalImageStorage(str(storage_path))
+            self.storage = LocalImageStorage(base_path=str(storage_path))
             logger.info(f"LocalImageStorage 初始化完成: {storage_path}")
         except StorageException as e:
             logger.error(f"LocalImageStorage 初始化失败: {e}")
@@ -182,7 +182,7 @@ class ImageService:
             logger.info(f"  生成图片ID: {image_id}")
 
             # 2. 保存图片到本地存储（使用image_id作为文件名）
-            save_result = self.storage.save_image(
+            save_result = self.storage.save(
                 image_bytes=image_bytes,
                 filename=f"{image_id}.jpg"
             )

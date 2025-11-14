@@ -1,18 +1,21 @@
 """
-诊断API路由模块 (P4.2 实现)
+诊断API路由模块 (P4.2 + P4.5 实现)
 
 功能：
-- POST /api/v1/diagnose - 执行疾病诊断
-- GET /api/v1/diagnose/{diagnosis_id} - 查询诊断结果
+- POST /api/v1/diagnose - 执行疾病诊断（P4.2）
+- GET /api/v1/diagnose/{diagnosis_id} - 查询诊断结果（P4.2）
+- POST /api/v1/diagnose/batch - 批量上传图片并诊断（P4.5）
+- GET /api/v1/diagnose/batch/{batch_id} - 查询批量诊断结果（P4.5）
+- GET /api/v1/diagnose/batch/{batch_id}/progress - 查询批量诊断进度（P4.5）
 
-实现阶段：P4.2
-对应设计文档：详细设计文档v2.0 第6.2节
+实现阶段：P4.2（单图诊断）+ P4.5（批量诊断）
+对应设计文档：详细设计文档v2.0 第6.2节、第6.6节
 
 架构说明：
 - 使用FastAPI的APIRouter创建路由
-- 通过Depends注入DiagnosisService和ImageService
+- 通过Depends注入DiagnosisService、ImageService、BatchDiagnosisService
 - 请求验证使用UploadFile（图片上传）
-- 响应格式使用DiagnosisResponseSchema
+- 响应格式使用DiagnosisResponseSchema、BatchCreateResponse、BatchResultResponse、BatchProgressResponse
 
 作者：AI Python Architect
 日期：2025-11-15
@@ -21,18 +24,25 @@
 import logging
 from pathlib import Path
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 import time
 
 from fastapi import APIRouter, Depends, File, UploadFile, Form, HTTPException, status
 from fastapi.responses import JSONResponse
 
-# Schema导入
+# Schema导入（单图诊断）
 from backend.apps.api.schemas.diagnosis import (
     DiagnosisResponseSchema,
     DiagnosisSchema,
     DiagnosisScoreSchema,
     CandidateDiseaseSchema,
+)
+
+# Schema导入（批量诊断）
+from backend.apps.api.schemas.batch_diagnosis import (
+    BatchCreateResponse,
+    BatchResultResponse,
+    BatchProgressResponse,
 )
 
 # 依赖注入
@@ -44,6 +54,7 @@ from backend.apps.api.deps import (
 # Service导入
 from backend.services.diagnosis_service import DiagnosisService, UnsupportedImageException
 from backend.services.image_service import ImageService
+from backend.services.batch_diagnosis_service import BatchDiagnosisService
 
 # Domain模型
 from backend.domain.diagnosis import DiagnosisResult, ConfidenceLevel
@@ -59,6 +70,55 @@ logger = logging.getLogger(__name__)
 
 # 创建路由器
 router = APIRouter()
+
+
+# ==================== 批量诊断服务依赖注入 ====================
+
+# 全局批量诊断服务单例
+_batch_diagnosis_service: Optional[BatchDiagnosisService] = None
+
+
+async def get_batch_diagnosis_service(
+    diagnosis_service: DiagnosisService = Depends(get_diagnosis_service),
+    image_service: ImageService = Depends(get_image_service),
+) -> BatchDiagnosisService:
+    """
+    获取批量诊断服务（依赖注入）
+
+    Args:
+        diagnosis_service: 诊断服务实例（通过依赖注入）
+        image_service: 图片服务实例（通过依赖注入）
+
+    Returns:
+        BatchDiagnosisService: 批量诊断服务对象
+
+    注意：
+    - 使用全局单例模式
+    - 首次调用时创建批量诊断服务
+    - 自动注入DiagnosisService和ImageService
+    """
+    global _batch_diagnosis_service
+
+    if _batch_diagnosis_service is not None:
+        return _batch_diagnosis_service
+
+    try:
+        # 创建批量诊断服务
+        _batch_diagnosis_service = BatchDiagnosisService(
+            diagnosis_service=diagnosis_service,
+            image_service=image_service,
+            max_images_per_batch=100,  # 最多100张图片
+            estimated_time_per_image_ms=4000  # 单张图片预计4秒
+        )
+
+        logger.info("✅ 批量诊断服务初始化成功")
+        return _batch_diagnosis_service
+    except Exception as e:
+        logger.error(f"❌ 批量诊断服务初始化失败: {e}")
+        raise
+
+
+# ==================== 单图诊断路由 ====================
 
 
 def _convert_diagnosis_result_to_response(
@@ -332,6 +392,306 @@ async def get_diagnosis_result(
     )
 
 
+# ==================== 批量诊断路由 ====================
+
+@router.post(
+    "/diagnose/batch",
+    response_model=BatchCreateResponse,
+    status_code=status.HTTP_200_OK,
+    summary="批量上传图片并诊断",
+    description="批量上传图片（最多100张），异步执行诊断，返回批量任务ID",
+    tags=["Diagnosis"]
+)
+async def batch_diagnose(
+    images: List[UploadFile] = File(..., description="图片文件数组（JPG/PNG/HEIC），最多100张"),
+    flower_genus: Optional[str] = Form(None, description="花卉种属（可选，应用于所有图片）"),
+    batch_service: BatchDiagnosisService = Depends(get_batch_diagnosis_service),
+) -> BatchCreateResponse:
+    """
+    批量上传图片并执行诊断（P4.5）
+
+    请求参数：
+    - images: 图片文件数组（multipart/form-data），最多100张
+    - flower_genus: 花卉种属（可选，Rosa/Prunus/Tulipa/Dianthus/Paeonia）
+
+    响应格式：
+    - batch_id: 批量诊断任务ID（格式：batch_YYYYMMDD_HHmmss）
+    - total_images: 总图片数量
+    - status: 任务状态（processing）
+    - created_at: 创建时间（ISO 8601格式）
+    - estimated_completion_time: 预计完成时间（ISO 8601格式）
+    - message: 提示消息
+
+    异常处理：
+    - 400: 图片数量超过限制（最多100张）
+    - 400: 图片数量为0
+    - 500: 批量诊断服务异常
+
+    对应设计文档：详细设计文档v2.0 第6.6.1节
+    """
+    start_time = time.time()
+    logger.info(f"收到批量诊断请求: image_count={len(images)}, flower_genus={flower_genus}")
+
+    try:
+        # 1. 验证图片数量
+        if len(images) == 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "error": "ValidationError",
+                    "message": "图片数量不能为0",
+                    "detail": "请至少上传1张图片"
+                }
+            )
+
+        if len(images) > 100:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "error": "ValidationError",
+                    "message": f"上传图片数量超过限制(最多100张)，实际上传: {len(images)}",
+                    "detail": "请减少上传图片数量"
+                }
+            )
+
+        # 2. 读取所有图片内容
+        image_list = []
+        for img in images:
+            image_bytes = await img.read()
+            image_list.append({
+                "filename": img.filename or "unknown.jpg",
+                "bytes": image_bytes
+            })
+            logger.info(f"  - {img.filename}: {len(image_bytes)} bytes")
+
+        # 3. 创建批量任务
+        batch_id = await batch_service.create_batch_task(
+            images=image_list,
+            flower_genus=flower_genus
+        )
+
+        # 4. 获取任务进度（获取created_at和estimated_completion_time）
+        progress = batch_service.get_batch_progress(batch_id)
+
+        # 5. 构建响应
+        response = BatchCreateResponse(
+            batch_id=batch_id,
+            total_images=len(images),
+            status="processing",
+            created_at=progress["created_at"],
+            estimated_completion_time=progress.get("estimated_completion_time", ""),
+            message="批量诊断任务已创建，请使用batch_id查询进度"
+        )
+
+        total_time_ms = int((time.time() - start_time) * 1000)
+        logger.info(f"批量任务创建成功: batch_id={batch_id}, total_time={total_time_ms}ms")
+
+        return response
+
+    except HTTPException:
+        # 重新抛出HTTPException
+        raise
+
+    except ValueError as e:
+        # 参数验证异常（由BatchDiagnosisService抛出）
+        logger.error(f"参数验证失败: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "error": "ValidationError",
+                "message": str(e),
+                "detail": "请检查请求参数"
+            }
+        )
+
+    except Exception as e:
+        # 其他未知异常
+        logger.exception(f"批量诊断服务异常: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": "BATCH_DIAGNOSIS_SERVICE_ERROR",
+                "message": "批量诊断服务内部错误",
+                "detail": str(e)
+            }
+        )
+
+
+@router.get(
+    "/diagnose/batch/{batch_id}",
+    response_model=BatchResultResponse,
+    status_code=status.HTTP_200_OK,
+    summary="查询批量诊断结果",
+    description="根据batch_id查询批量诊断结果（完成或处理中）",
+    tags=["Diagnosis"]
+)
+async def get_batch_result(
+    batch_id: str,
+    batch_service: BatchDiagnosisService = Depends(get_batch_diagnosis_service),
+) -> BatchResultResponse:
+    """
+    查询批量诊断结果（P4.5）
+
+    路径参数：
+    - batch_id: 批量诊断任务ID（格式：batch_YYYYMMDD_HHmmss）
+
+    响应格式（处理中）：
+    - batch_id: 批量诊断任务ID
+    - status: 任务状态（processing）
+    - total_images: 总图片数量
+    - completed_images: 已完成图片数量
+    - failed_images: 失败图片数量
+    - created_at: 创建时间
+    - estimated_completion_time: 预计完成时间
+    - message: 提示消息
+
+    响应格式（已完成）：
+    - batch_id: 批量诊断任务ID
+    - status: 任务状态（completed）
+    - total_images: 总图片数量
+    - completed_images: 已完成图片数量
+    - failed_images: 失败图片数量
+    - created_at: 创建时间
+    - completed_at: 完成时间
+    - execution_time_ms: 总执行耗时
+    - results: 诊断结果列表（List[BatchDiagnosisResultItem]）
+    - summary: 汇总统计（BatchSummary）
+
+    异常处理：
+    - 404: batch_id不存在
+    - 500: 批量诊断服务异常
+
+    对应设计文档：详细设计文档v2.0 第6.6.2节
+    """
+    logger.info(f"查询批量诊断结果: batch_id={batch_id}")
+
+    try:
+        # 1. 获取批量诊断结果
+        result = batch_service.get_batch_result(batch_id)
+
+        # 2. 如果batch_id不存在，返回404
+        if result is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={
+                    "error": "BATCH_NOT_FOUND",
+                    "message": f"批量诊断任务不存在: {batch_id}",
+                    "detail": "请检查batch_id是否正确"
+                }
+            )
+
+        # 3. 构建响应
+        response = BatchResultResponse(**result)
+
+        logger.info(f"批量诊断结果查询成功: batch_id={batch_id}, status={response.status}")
+        return response
+
+    except HTTPException:
+        # 重新抛出HTTPException
+        raise
+
+    except Exception as e:
+        # 其他未知异常
+        logger.exception(f"批量诊断结果查询异常: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": "BATCH_RESULT_QUERY_ERROR",
+                "message": "批量诊断结果查询失败",
+                "detail": str(e)
+            }
+        )
+
+
+@router.get(
+    "/diagnose/batch/{batch_id}/progress",
+    response_model=BatchProgressResponse,
+    status_code=status.HTTP_200_OK,
+    summary="查询批量诊断进度",
+    description="根据batch_id查询批量诊断进度（实时进度信息）",
+    tags=["Diagnosis"]
+)
+async def get_batch_progress(
+    batch_id: str,
+    batch_service: BatchDiagnosisService = Depends(get_batch_diagnosis_service),
+) -> BatchProgressResponse:
+    """
+    查询批量诊断进度（P4.5）
+
+    路径参数：
+    - batch_id: 批量诊断任务ID（格式：batch_YYYYMMDD_HHmmss）
+
+    响应格式（处理中）：
+    - batch_id: 批量诊断任务ID
+    - status: 任务状态（processing）
+    - total_images: 总图片数量
+    - completed_images: 已完成图片数量
+    - failed_images: 失败图片数量
+    - progress_percentage: 进度百分比（0-100）
+    - current_image: 当前处理中的图片信息（CurrentImageInfo）
+    - created_at: 创建时间
+    - estimated_completion_time: 预计完成时间
+    - average_time_per_image_ms: 单张图片平均耗时
+
+    响应格式（已完成）：
+    - batch_id: 批量诊断任务ID
+    - status: 任务状态（completed）
+    - total_images: 总图片数量
+    - completed_images: 已完成图片数量
+    - failed_images: 失败图片数量
+    - progress_percentage: 进度百分比（100）
+    - created_at: 创建时间
+    - completed_at: 完成时间
+    - message: 提示消息
+
+    异常处理：
+    - 404: batch_id不存在
+    - 500: 批量诊断服务异常
+
+    对应设计文档：详细设计文档v2.0 第6.6.3节
+    """
+    logger.info(f"查询批量诊断进度: batch_id={batch_id}")
+
+    try:
+        # 1. 获取批量诊断进度
+        progress = batch_service.get_batch_progress(batch_id)
+
+        # 2. 如果batch_id不存在，返回404
+        if progress is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={
+                    "error": "BATCH_NOT_FOUND",
+                    "message": f"批量诊断任务不存在: {batch_id}",
+                    "detail": "请检查batch_id是否正确"
+                }
+            )
+
+        # 3. 构建响应
+        response = BatchProgressResponse(**progress)
+
+        logger.info(f"批量诊断进度查询成功: batch_id={batch_id}, progress={response.progress_percentage}%")
+        return response
+
+    except HTTPException:
+        # 重新抛出HTTPException
+        raise
+
+    except Exception as e:
+        # 其他未知异常
+        logger.exception(f"批量诊断进度查询异常: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": "BATCH_PROGRESS_QUERY_ERROR",
+                "message": "批量诊断进度查询失败",
+                "detail": str(e)
+            }
+        )
+
+
+# ==================== 主函数 ====================
+
 def main():
     """
     诊断路由模块测试示例
@@ -349,12 +709,25 @@ def main():
       -F "image=@test_image.jpg" \
       -F "flower_genus=Prunus"
 
-    # 查询诊断结果
+    # 批量诊断
+    curl -X POST http://localhost:8000/api/v1/diagnose/batch \
+      -F "images=@image1.jpg" \
+      -F "images=@image2.jpg" \
+      -F "images=@image3.jpg" \
+      -F "flower_genus=Rosa"
+
+    # 查询批量诊断进度
+    curl -X GET http://localhost:8000/api/v1/diagnose/batch/batch_20251115_143000/progress
+
+    # 查询批量诊断结果
+    curl -X GET http://localhost:8000/api/v1/diagnose/batch/batch_20251115_143000
+
+    # 查询单图诊断结果
     curl -X GET http://localhost:8000/api/v1/diagnose/diag_20251115_001
     ```
     """
     print("=" * 80)
-    print("诊断API路由模块")
+    print("诊断API路由模块 (P4.2 + P4.5)")
     print("=" * 80)
     print("\n本模块是FastAPI路由模块，不能直接运行。")
     print("请通过以下方式使用：")
@@ -363,10 +736,12 @@ def main():
     print("   uvicorn apps.api.main:app --reload")
     print("\n2. 访问Swagger UI测试接口：")
     print("   http://localhost:8000/docs")
-    print("\n3. 使用Postman或curl测试：")
-    print("   POST http://localhost:8000/api/v1/diagnose")
-    print("   - Form Data: image (file)")
-    print("   - Form Data: flower_genus (optional, string)")
+    print("\n3. 支持的API接口：")
+    print("   - POST /api/v1/diagnose (单图诊断)")
+    print("   - GET /api/v1/diagnose/{diagnosis_id} (查询诊断结果)")
+    print("   - POST /api/v1/diagnose/batch (批量诊断)")
+    print("   - GET /api/v1/diagnose/batch/{batch_id} (查询批量诊断结果)")
+    print("   - GET /api/v1/diagnose/batch/{batch_id}/progress (查询批量诊断进度)")
     print("\n" + "=" * 80)
 
 

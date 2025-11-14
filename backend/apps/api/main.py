@@ -369,9 +369,10 @@ from backend.apps.api.routers import ontology
 
 app.include_router(ontology.router, prefix="/api/v1", tags=["Ontology"])
 
-# P4.5: 其他路由（待实现）
-# from backend.apps.api.routers import images
-# app.include_router(images.router, prefix="/api/v1", tags=["Images"])
+# P4.6: 图片管理API路由
+from backend.apps.api.routers import images
+
+app.include_router(images.router, prefix="/api/v1", tags=["Images"])
 
 
 # ==================== 主函数 ====================
