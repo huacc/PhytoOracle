@@ -208,7 +208,7 @@ class TestImageServiceUpdateAccuracyLabel:
 
         # 验证
         assert updated is True
-        mock_service.repository.update_accuracy_label.assert_called_once_with("img_001", "correct")
+        mock_service.repository.update_accuracy_label.assert_called_once_with("img_001", "correct", None)
 
     def test_update_accuracy_label_incorrect(self, mock_service):
         """测试：标记为错误"""
@@ -217,7 +217,47 @@ class TestImageServiceUpdateAccuracyLabel:
 
         # 验证
         assert updated is True
-        mock_service.repository.update_accuracy_label.assert_called_once_with("img_001", "incorrect")
+        mock_service.repository.update_accuracy_label.assert_called_once_with("img_001", "incorrect", None)
+
+    def test_update_accuracy_label_with_bool_true(self, mock_service):
+        """测试：P3.9新增 - 使用bool类型True标记为正确"""
+        # 执行
+        updated = mock_service.update_accuracy_label("img_001", True)
+
+        # 验证
+        assert updated is True
+        # bool True应该被转换为"correct"
+        mock_service.repository.update_accuracy_label.assert_called_once_with("img_001", "correct", None)
+
+    def test_update_accuracy_label_with_bool_false(self, mock_service):
+        """测试：P3.9新增 - 使用bool类型False标记为错误"""
+        # 执行
+        updated = mock_service.update_accuracy_label("img_001", False)
+
+        # 验证
+        assert updated is True
+        # bool False应该被转换为"incorrect"
+        mock_service.repository.update_accuracy_label.assert_called_once_with("img_001", "incorrect", None)
+
+    def test_update_accuracy_label_with_user_feedback(self, mock_service):
+        """测试：P3.9新增 - 带用户反馈的准确性标注"""
+        # 执行
+        feedback_text = "诊断结果不准确，应该是白粉病而不是黑斑病"
+        updated = mock_service.update_accuracy_label("img_001", "incorrect", feedback_text)
+
+        # 验证
+        assert updated is True
+        mock_service.repository.update_accuracy_label.assert_called_once_with("img_001", "incorrect", feedback_text)
+
+    def test_update_accuracy_label_bool_with_feedback(self, mock_service):
+        """测试：P3.9新增 - 使用bool类型并带用户反馈"""
+        # 执行
+        feedback_text = "确认诊断正确"
+        updated = mock_service.update_accuracy_label("img_001", True, feedback_text)
+
+        # 验证
+        assert updated is True
+        mock_service.repository.update_accuracy_label.assert_called_once_with("img_001", "correct", feedback_text)
 
     def test_update_accuracy_label_unknown(self, mock_service):
         """测试：标记为未知"""

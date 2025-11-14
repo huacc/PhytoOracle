@@ -24,6 +24,7 @@ from pathlib import Path
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 import subprocess
+import json
 
 from backend.infrastructure.ontology.loader import KnowledgeBaseLoader
 from backend.domain.disease import DiseaseOntology
@@ -311,6 +312,125 @@ class KnowledgeService:
             logger.warning(f"查询疾病 {disease_id}：未找到")
 
         return disease
+
+    def get_knowledge_tree(self) -> Dict[str, Any]:
+        """
+        获取按宿主属分组的疾病树结构（P3.9新增）
+
+        读取host_disease/associations.json文件，返回树形结构的知识库组织视图。
+        用于前端界面4的知识库树展示。
+
+        Returns:
+            Dict[str, Any]: 树形结构的知识库数据
+            ```python
+            {
+                "version": "1.0",
+                "last_updated": "2025-01-14T10:30:45Z",
+                "total_hosts": 5,
+                "total_diseases": 13,
+                "hosts": [
+                    {
+                        "genus": "Rosa",
+                        "name_zh": "蔷薇属",
+                        "name_en": "Rose",
+                        "disease_count": 4,
+                        "diseases": [
+                            {
+                                "disease_id": "rose_black_spot",
+                                "disease_name": "玫瑰黑斑病",
+                                "common_name_en": "Rose Black Spot",
+                                "pathogen": "Diplocarpon rosae",
+                                "prevalence": "common"
+                            }
+                        ]
+                    }
+                ]
+            }
+            ```
+
+        Raises:
+            KnowledgeServiceException: 读取文件失败
+
+        使用示例：
+        ```python
+        tree = service.get_knowledge_tree()
+        print(f"知识库包含 {tree['total_hosts']} 个宿主属")
+        for host in tree['hosts']:
+            print(f"  - {host['name_zh']}（{host['genus']}）：{host['disease_count']} 种疾病")
+        ```
+        """
+        # P3.9新增：此方法不需要initialization，因为它直接读取JSON文件，不依赖self._diseases等初始化的数据结构
+
+        # 读取associations.json文件
+        associations_file = self.kb_path / "host_disease" / "associations.json"
+
+        if not associations_file.exists():
+            logger.error(f"associations.json文件不存在: {associations_file}")
+            raise KnowledgeServiceException(
+                f"associations.json不存在: {associations_file}"
+            )
+
+        try:
+            with open(associations_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+
+            # 提取必要字段
+            version = data.get("version", "1.0")
+            last_updated_str = data.get("last_updated", datetime.now().strftime("%Y-%m-%d"))
+            # 转换为ISO 8601格式
+            last_updated = datetime.strptime(last_updated_str, "%Y-%m-%d").isoformat() + "Z"
+
+            # 构建hosts列表
+            hosts = []
+            total_diseases = 0
+
+            for association in data.get("associations", []):
+                host_genus = association.get("host_genus", "")
+                genus_name = association.get("genus_name", "")
+                genus_name_en = association.get("genus_name_en", "")
+                diseases_data = association.get("diseases", [])
+
+                disease_count = len(diseases_data)
+                total_diseases += disease_count
+
+                # 构建疾病列表
+                diseases = []
+                for disease in diseases_data:
+                    diseases.append({
+                        "disease_id": disease.get("disease_id", ""),
+                        "disease_name": disease.get("disease_name", ""),
+                        "common_name_en": disease.get("common_name_en", ""),
+                        "pathogen": disease.get("pathogen", ""),
+                        "prevalence": disease.get("prevalence", "unknown")
+                    })
+
+                # 添加到hosts列表
+                hosts.append({
+                    "genus": host_genus,
+                    "name_zh": genus_name,
+                    "name_en": genus_name_en,
+                    "disease_count": disease_count,
+                    "diseases": diseases
+                })
+
+            # 构建返回结果
+            result = {
+                "version": version,
+                "last_updated": last_updated,
+                "total_hosts": len(hosts),
+                "total_diseases": total_diseases,
+                "hosts": hosts
+            }
+
+            logger.info(f"获取知识库树：{len(hosts)} 个宿主属，{total_diseases} 种疾病")
+            return result
+
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON解析失败: {e}")
+            raise KnowledgeServiceException(f"JSON解析失败: {e}")
+        except Exception as e:
+            logger.error(f"读取associations.json失败: {e}")
+            raise KnowledgeServiceException(f"读取associations.json失败: {e}")
 
     def get_feature_ontology(self) -> Optional[FeatureOntology]:
         """

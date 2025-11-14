@@ -49,7 +49,7 @@ class ImageRepository:
     4. 软删除图片（soft_delete方法）
     5. 按ID查询单个图片（get_by_id方法）
 
-    数据库表结构：
+    数据库表结构（P3.9更新）：
     ```sql
     CREATE TABLE images (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -61,6 +61,7 @@ class ImageRepository:
         disease_name TEXT,
         confidence_level TEXT,
         is_accurate TEXT,  -- 'correct' / 'incorrect' / 'unknown'
+        user_feedback TEXT,  -- P3.9新增：用户反馈文本（可选）
         uploaded_at TEXT NOT NULL,
         is_deleted INTEGER DEFAULT 0,
         deleted_at TEXT,
@@ -120,6 +121,7 @@ class ImageRepository:
         初始化数据库表
 
         创建 images 表（如果不存在）
+        如果表已存在，自动添加P3.9新增的user_feedback列（如果尚未添加）
 
         Raises:
             ImageRepositoryException: 数据库初始化失败
@@ -127,6 +129,8 @@ class ImageRepository:
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
+
+                # 创建images表（如果不存在）
                 cursor.execute("""
                     CREATE TABLE IF NOT EXISTS images (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -138,6 +142,7 @@ class ImageRepository:
                         disease_name TEXT,
                         confidence_level TEXT,
                         is_accurate TEXT DEFAULT 'unknown',
+                        user_feedback TEXT,
                         uploaded_at TEXT NOT NULL,
                         is_deleted INTEGER DEFAULT 0,
                         deleted_at TEXT,
@@ -145,8 +150,22 @@ class ImageRepository:
                         updated_at TEXT NOT NULL
                     )
                 """)
+
+                # P3.9 Migration: 如果表已存在但没有user_feedback列，则添加该列
+                # 检查列是否存在
+                cursor.execute("PRAGMA table_info(images)")
+                columns = [column[1] for column in cursor.fetchall()]
+
+                if "user_feedback" not in columns:
+                    logger.info("检测到旧版本数据库，正在添加user_feedback列...")
+                    cursor.execute("""
+                        ALTER TABLE images ADD COLUMN user_feedback TEXT
+                    """)
+                    logger.info("user_feedback列添加成功")
+
                 conn.commit()
                 logger.info("数据库表初始化完成")
+
         except sqlite3.Error as e:
             logger.error(f"数据库初始化失败: {e}")
             raise ImageRepositoryException(f"数据库初始化失败: {e}")
@@ -349,14 +368,16 @@ class ImageRepository:
     def update_accuracy_label(
         self,
         image_id: str,
-        is_accurate: str
+        is_accurate: str,
+        user_feedback: Optional[str] = None
     ) -> bool:
         """
-        更新准确性标签
+        更新准确性标签（P3.9扩展：支持用户反馈）
 
         Args:
             image_id: 图片ID
             is_accurate: 准确性标签（'correct' / 'incorrect' / 'unknown'）
+            user_feedback: 用户反馈文本（可选，P3.9新增）
 
         Returns:
             bool: True if updated, False if not found
@@ -369,17 +390,28 @@ class ImageRepository:
 
             with self._get_connection() as conn:
                 cursor = conn.cursor()
-                cursor.execute("""
-                    UPDATE images
-                    SET is_accurate = ?, updated_at = ?
-                    WHERE image_id = ? AND is_deleted = 0
-                """, (is_accurate, now, image_id))
+
+                # P3.9: 如果提供了user_feedback，则同时更新
+                if user_feedback is not None:
+                    cursor.execute("""
+                        UPDATE images
+                        SET is_accurate = ?, user_feedback = ?, updated_at = ?
+                        WHERE image_id = ? AND is_deleted = 0
+                    """, (is_accurate, user_feedback, now, image_id))
+                else:
+                    cursor.execute("""
+                        UPDATE images
+                        SET is_accurate = ?, updated_at = ?
+                        WHERE image_id = ? AND is_deleted = 0
+                    """, (is_accurate, now, image_id))
+
                 conn.commit()
 
                 updated = cursor.rowcount > 0
 
             if updated:
-                logger.info(f"更新准确性标签成功: {image_id} -> {is_accurate}")
+                feedback_info = f" (反馈: {user_feedback[:20]}...)" if user_feedback else ""
+                logger.info(f"更新准确性标签成功: {image_id} -> {is_accurate}{feedback_info}")
             else:
                 logger.warning(f"更新失败：图片 {image_id} 不存在或已删除")
 

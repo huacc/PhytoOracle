@@ -20,7 +20,7 @@
 
 import logging
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Union
 from datetime import datetime
 
 from backend.infrastructure.storage.local_storage import LocalImageStorage
@@ -224,16 +224,20 @@ class ImageService:
     def update_accuracy_label(
         self,
         image_id: str,
-        is_accurate: str
+        is_accurate: Union[str, bool],
+        user_feedback: Optional[str] = None
     ) -> bool:
         """
-        更新准确性标签
+        更新准确性标签（P3.9扩展：支持bool类型和用户反馈）
 
         用于用户标注诊断结果的准确性，实现主动学习反馈循环
 
         Args:
             image_id: 图片ID
-            is_accurate: 准确性标签（'correct' / 'incorrect' / 'unknown'）
+            is_accurate: 准确性标签
+                - str类型：'correct' / 'incorrect' / 'unknown'（向后兼容）
+                - bool类型：True（correct） / False（incorrect）（P3.9新增）
+            user_feedback: 用户反馈文本（可选，P3.9新增）
 
         Returns:
             bool: True if updated, False if not found
@@ -243,31 +247,49 @@ class ImageService:
 
         使用示例：
         ```python
-        # 标记诊断结果为正确
+        # 旧API（向后兼容）
         updated = service.update_accuracy_label("img_20251113_001", "correct")
-        if updated:
-            print("标注成功")
 
-        # 标记诊断结果为错误（需要人工审核）
-        updated = service.update_accuracy_label("img_20251113_002", "incorrect")
+        # 新API（P3.9，bool类型）
+        updated = service.update_accuracy_label("img_20251113_001", True)
+
+        # 新API（P3.9，带用户反馈）
+        updated = service.update_accuracy_label(
+            "img_20251113_001",
+            is_accurate=False,
+            user_feedback="诊断结果不准确，应该是白粉病而不是黑斑病"
+        )
         ```
         """
-        logger.info(f"更新准确性标签: {image_id} -> {is_accurate}")
+        # P3.9: 如果is_accurate是bool类型，转换为str类型
+        if isinstance(is_accurate, bool):
+            is_accurate_str = "correct" if is_accurate else "incorrect"
+            logger.info(f"P3.9: 将bool类型转换为str: {is_accurate} -> {is_accurate_str}")
+        else:
+            is_accurate_str = is_accurate
+
+        logger.info(f"更新准确性标签: {image_id} -> {is_accurate_str}")
+        if user_feedback:
+            logger.info(f"  用户反馈: {user_feedback[:50]}...")
 
         # 验证准确性标签
         valid_labels = ["correct", "incorrect", "unknown"]
-        if is_accurate not in valid_labels:
+        if is_accurate_str not in valid_labels:
             raise ImageServiceException(
-                f"无效的准确性标签: {is_accurate}，有效值：{valid_labels}"
+                f"无效的准确性标签: {is_accurate_str}，有效值：{valid_labels}"
             )
 
         try:
-            # 更新数据库中的准确性标签
-            updated = self.repository.update_accuracy_label(image_id, is_accurate)
+            # P3.9: 更新数据库中的准确性标签和用户反馈
+            updated = self.repository.update_accuracy_label(
+                image_id,
+                is_accurate_str,
+                user_feedback
+            )
 
             # 如果准确性标签是correct/incorrect，移动文件到对应文件夹
-            if updated and is_accurate in ["correct", "incorrect"]:
-                self._move_to_accuracy_folder(image_id, is_accurate)
+            if updated and is_accurate_str in ["correct", "incorrect"]:
+                self._move_to_accuracy_folder(image_id, is_accurate_str)
 
             return updated
 

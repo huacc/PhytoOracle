@@ -25,6 +25,39 @@ from datetime import datetime
 from enum import Enum
 
 
+class QADetail(BaseModel):
+    """
+    VLM问答对详情模型（P3.9新增）
+
+    用于存储诊断过程中VLM的问答对，支持前端界面1展示完整推理过程
+
+    字段说明：
+    - question_id: 问题ID（如 "Q0.0", "Q0.1", "Q1", "Q2" 等）
+    - question: 问题文本
+    - answer: VLM的回答文本
+    - image_url: 标注图URL（可选，如果VLM返回了标注图）
+    """
+    question_id: str = Field(
+        ...,
+        pattern=r"^Q\d+(\.\d+)?$",
+        description="问题ID（如 Q0.0, Q1, Q2 等）"
+    )
+    question: str = Field(..., min_length=1, description="问题文本")
+    answer: str = Field(..., min_length=1, description="VLM的回答文本")
+    image_url: Optional[str] = Field(None, description="标注图URL（可选）")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "question_id": "Q0.0",
+                "question": "这张图片的内容类型是什么？",
+                "answer": "plant（植物）",
+                "image_url": None
+            }
+        }
+    )
+
+
 class ContentType(str, Enum):
     """
     图片内容类型枚举
@@ -281,6 +314,7 @@ class DiagnosisResult(BaseModel):
     - reasoning: 推理过程（列表形式）
     - matched_rule: 匹配的诊断规则
     - candidates: 候选疾病列表（疑似诊断时）
+    - qa_details: VLM问答对详情列表（P3.9新增）
     - vlm_provider: VLM提供商（gpt-4o/claude-3.5-sonnet等）
     - execution_time_ms: 执行耗时（毫秒）
     - error: 错误信息（如果有）
@@ -322,6 +356,12 @@ class DiagnosisResult(BaseModel):
     candidates: Optional[List[Dict[str, Any]]] = Field(
         None,
         description="候选疾病列表（疑似诊断时，Top 2-3）"
+    )
+
+    # P3.9新增：VLM问答对详情
+    qa_details: List[QADetail] = Field(
+        default_factory=list,
+        description="VLM问答对详情列表（Q0-Q6问答对，P3.9新增）"
     )
 
     # 执行信息

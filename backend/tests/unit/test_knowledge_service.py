@@ -414,5 +414,184 @@ class TestGitCommitHashRetrieval:
             assert commit_hash is None
 
 
+class TestKnowledgeServiceGetKnowledgeTree:
+    """P3.9新增：知识库树结构获取测试"""
+
+    @pytest.fixture
+    def mock_service_with_associations(self, tmp_path):
+        """创建带有associations.json的Mock服务"""
+        kb_path = tmp_path / "knowledge_base"
+        kb_path.mkdir()
+
+        # 创建host_disease目录
+        host_disease_dir = kb_path / "host_disease"
+        host_disease_dir.mkdir()
+
+        # 创建associations.json文件
+        associations_data = {
+            "version": "1.0",
+            "last_updated": "2025-11-13",
+            "associations": [
+                {
+                    "host_genus": "Rosa",
+                    "genus_name": "玫瑰属",
+                    "genus_name_en": "Rose",
+                    "diseases": [
+                        {
+                            "disease_id": "rose_black_spot",
+                            "disease_name": "玫瑰黑斑病",
+                            "common_name_en": "Black Spot of Rose",
+                            "pathogen": "Diplocarpon rosae",
+                            "prevalence": "common"
+                        },
+                        {
+                            "disease_id": "rose_powdery_mildew",
+                            "disease_name": "玫瑰白粉病",
+                            "common_name_en": "Powdery Mildew of Rose",
+                            "pathogen": "Podosphaera pannosa",
+                            "prevalence": "very_common"
+                        }
+                    ]
+                },
+                {
+                    "host_genus": "Paeonia",
+                    "genus_name": "牡丹属",
+                    "genus_name_en": "Peony",
+                    "diseases": [
+                        {
+                            "disease_id": "peony_leaf_blight",
+                            "disease_name": "牡丹叶枯病",
+                            "common_name_en": "Leaf Blight of Peony",
+                            "pathogen": "Cladosporium paeoniae",
+                            "prevalence": "common"
+                        }
+                    ]
+                }
+            ]
+        }
+
+        import json
+        associations_file = host_disease_dir / "associations.json"
+        with open(associations_file, "w", encoding="utf-8") as f:
+            json.dump(associations_data, f, ensure_ascii=False, indent=2)
+
+        # 创建Mock服务
+        mock_loader = Mock()
+        mock_loader.get_all_diseases.return_value = []
+        mock_loader.get_feature_ontology.return_value = Mock()
+
+        with patch('backend.services.knowledge_service.KnowledgeBaseLoader', return_value=mock_loader):
+            service = KnowledgeService(kb_path, auto_initialize=False)
+            return service
+
+    def test_get_knowledge_tree_success(self, mock_service_with_associations):
+        """测试：P3.9新增 - 成功获取知识库树"""
+        # 执行
+        tree = mock_service_with_associations.get_knowledge_tree()
+
+        # 验证顶层结构
+        assert "version" in tree
+        assert "last_updated" in tree
+        assert "total_hosts" in tree
+        assert "total_diseases" in tree
+        assert "hosts" in tree
+
+        # 验证version
+        assert tree["version"] == "1.0"
+
+        # 验证统计信息
+        assert tree["total_hosts"] == 2
+        assert tree["total_diseases"] == 3
+
+        # 验证hosts列表
+        assert isinstance(tree["hosts"], list)
+        assert len(tree["hosts"]) == 2
+
+    def test_get_knowledge_tree_host_structure(self, mock_service_with_associations):
+        """测试：P3.9新增 - 验证宿主结构"""
+        # 执行
+        tree = mock_service_with_associations.get_knowledge_tree()
+
+        # 获取第一个宿主（Rosa）
+        rosa_host = tree["hosts"][0]
+
+        # 验证宿主字段
+        assert rosa_host["genus"] == "Rosa"
+        assert rosa_host["name_zh"] == "玫瑰属"
+        assert rosa_host["name_en"] == "Rose"
+        assert rosa_host["disease_count"] == 2
+        assert "diseases" in rosa_host
+        assert isinstance(rosa_host["diseases"], list)
+
+    def test_get_knowledge_tree_disease_structure(self, mock_service_with_associations):
+        """测试：P3.9新增 - 验证疾病结构"""
+        # 执行
+        tree = mock_service_with_associations.get_knowledge_tree()
+
+        # 获取第一个疾病
+        rosa_host = tree["hosts"][0]
+        first_disease = rosa_host["diseases"][0]
+
+        # 验证疾病字段
+        assert "disease_id" in first_disease
+        assert "disease_name" in first_disease
+        assert "common_name_en" in first_disease
+        assert "pathogen" in first_disease
+        assert "prevalence" in first_disease
+
+        # 验证具体值
+        assert first_disease["disease_id"] == "rose_black_spot"
+        assert first_disease["disease_name"] == "玫瑰黑斑病"
+        assert first_disease["prevalence"] == "common"
+
+    def test_get_knowledge_tree_date_format(self, mock_service_with_associations):
+        """测试：P3.9新增 - 验证日期格式转换为ISO 8601"""
+        # 执行
+        tree = mock_service_with_associations.get_knowledge_tree()
+
+        # 验证日期格式（应该是ISO 8601格式）
+        last_updated = tree["last_updated"]
+        assert last_updated == "2025-11-13T00:00:00Z"
+
+    def test_get_knowledge_tree_file_not_found(self, tmp_path):
+        """测试：P3.9新增 - associations.json不存在时抛出异常"""
+        # 准备：创建知识库但不创建associations.json
+        kb_path = tmp_path / "knowledge_base"
+        kb_path.mkdir()
+
+        mock_loader = Mock()
+        mock_loader.get_all_diseases.return_value = []
+
+        with patch('backend.services.knowledge_service.KnowledgeBaseLoader', return_value=mock_loader):
+            service = KnowledgeService(kb_path, auto_initialize=False)
+
+            # 执行 & 验证
+            with pytest.raises(KnowledgeServiceException, match="associations.json不存在"):
+                service.get_knowledge_tree()
+
+    def test_get_knowledge_tree_invalid_json(self, tmp_path):
+        """测试：P3.9新增 - JSON格式错误时抛出异常"""
+        # 准备：创建无效的JSON文件
+        kb_path = tmp_path / "knowledge_base"
+        kb_path.mkdir()
+
+        host_disease_dir = kb_path / "host_disease"
+        host_disease_dir.mkdir()
+
+        associations_file = host_disease_dir / "associations.json"
+        with open(associations_file, "w") as f:
+            f.write("{invalid json")
+
+        mock_loader = Mock()
+        mock_loader.get_all_diseases.return_value = []
+
+        with patch('backend.services.knowledge_service.KnowledgeBaseLoader', return_value=mock_loader):
+            service = KnowledgeService(kb_path, auto_initialize=False)
+
+            # 执行 & 验证
+            with pytest.raises(KnowledgeServiceException, match="JSON解析失败"):
+                service.get_knowledge_tree()
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "--tb=short"])
