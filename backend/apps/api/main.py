@@ -354,12 +354,23 @@ async def ping() -> Dict[str, str]:
 
 # ==================== 路由注册（P4.2-P4.5实现） ====================
 
-# 注意：以下路由将在P4.2-P4.5阶段实现
-# from backend.apps.api.routers import diagnosis, knowledge, ontology, images
+# P4.2: 诊断API路由
+from backend.apps.api.routers import diagnosis
 
-# app.include_router(diagnosis.router, prefix="/api/v1", tags=["Diagnosis"])
-# app.include_router(knowledge.router, prefix="/api/v1", tags=["Knowledge"])
-# app.include_router(ontology.router, prefix="/api/v1", tags=["Ontology"])
+app.include_router(diagnosis.router, prefix="/api/v1", tags=["Diagnosis"])
+
+# P4.3: 知识库管理API路由
+from backend.apps.api.routers import knowledge
+
+app.include_router(knowledge.router, prefix="/api/v1", tags=["Knowledge"])
+
+# P4.4: 本体管理API路由
+from backend.apps.api.routers import ontology
+
+app.include_router(ontology.router, prefix="/api/v1", tags=["Ontology"])
+
+# P4.5: 其他路由（待实现）
+# from backend.apps.api.routers import images
 # app.include_router(images.router, prefix="/api/v1", tags=["Images"])
 
 
