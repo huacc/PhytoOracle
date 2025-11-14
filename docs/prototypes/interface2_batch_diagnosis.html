@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhytoOracle - 批量诊断</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: #fff;
+            border-bottom: 1px solid #e8e8e8;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 500;
+            color: #1890ff;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            background: #fff;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            color: #1890ff;
+            border-color: #1890ff;
+        }
+
+        .btn-primary {
+            background: #1890ff;
+            color: #fff;
+            border-color: #1890ff;
+        }
+
+        .btn-primary:hover {
+            background: #40a9ff;
+            border-color: #40a9ff;
+        }
+
+        .btn-success {
+            background: #52c41a;
+            color: #fff;
+            border-color: #52c41a;
+        }
+
+        .btn-success:hover {
+            background: #73d13d;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 24px auto;
+            padding: 0 24px;
+        }
+
+        .upload-section {
+            background: #fff;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .upload-area {
+            border: 2px dashed #d9d9d9;
+            border-radius: 8px;
+            padding: 60px 24px;
+            text-align: center;
+            background: #fafafa;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .upload-area:hover {
+            border-color: #1890ff;
+            background: #e6f7ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #1890ff;
+            background: #e6f7ff;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: #1890ff;
+            margin-bottom: 16px;
+        }
+
+        .upload-text {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .upload-hint {
+            font-size: 14px;
+            color: #999;
+        }
+
+        .viewer-section {
+            background: #fff;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .viewer-section.active {
+            display: block;
+        }
+
+        .viewer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .viewer-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .pagination {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .page-info {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .viewer-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .image-container {
+            text-align: center;
+        }
+
+        .image-preview {
+            max-width: 100%;
+            max-height: 400px;
+            border: 1px solid #e8e8e8;
+            border-radius: 8px;
+        }
+
+        .result-summary {
+            padding: 24px;
+            background: #fafafa;
+            border-radius: 8px;
+        }
+
+        .result-summary h3 {
+            font-size: 16px;
+            margin-bottom: 16px;
+            color: #333;
+        }
+
+        .disease-name {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .confidence {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 16px;
+        }
+
+        .confidence.high {
+            background: #f6ffed;
+            color: #52c41a;
+            border: 1px solid #b7eb8f;
+        }
+
+        .confidence.medium {
+            background: #fff7e6;
+            color: #fa8c16;
+            border: 1px solid #ffd591;
+        }
+
+        .confidence.low {
+            background: #fff1f0;
+            color: #ff4d4f;
+            border: 1px solid #ffa39e;
+        }
+
+        .pathogen {
+            color: #8c8c8c;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .key-features {
+            margin-top: 16px;
+        }
+
+        .feature-title {
+            font-weight: 500;
+            margin-bottom: 12px;
+            color: #333;
+        }
+
+        .feature-list {
+            list-style: none;
+        }
+
+        .feature-item {
+            padding: 6px 0;
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .feature-item::before {
+            content: '•';
+            color: #1890ff;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .results-grid {
+            background: #fff;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .results-grid.active {
+            display: block;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .results-header h2 {
+            font-size: 18px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .results-stats {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .results-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .result-card {
+            border: 1px solid #e8e8e8;
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #fff;
+            position: relative;
+        }
+
+        .result-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+
+        .result-card:hover::after {
+            content: '双击查看详情';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 12px;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        .result-card.active {
+            border-color: #1890ff;
+            box-shadow: 0 0 0 2px rgba(24,144,255,0.2);
+        }
+
+        .result-thumbnail {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            background: #f0f0f0;
+        }
+
+        .result-info {
+            font-size: 13px;
+        }
+
+        .result-disease {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .result-confidence {
+            color: #666;
+            font-size: 12px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #fff;
+            border-radius: 8px;
+            padding: 24px;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .modal-header {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 16px;
+        }
+
+        .modal-body {
+            margin-bottom: 24px;
+            color: #666;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        /* 详细诊断模态框样式 */
+        .detail-modal .modal-content {
+            max-width: 1200px;
+            width: 95%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 0;
+        }
+
+        .detail-modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e8e8e8;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            background: #fff;
+            z-index: 10;
+        }
+
+        .detail-modal-title {
+            font-size: 20px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .detail-modal-body {
+            padding: 24px;
+        }
+
+        .detail-image-result {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .detail-image {
+            text-align: center;
+            background: #fafafa;
+            padding: 16px;
+            border-radius: 8px;
+        }
+
+        .detail-image img {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 4px;
+        }
+
+        .detail-result {
+            padding: 16px;
+        }
+
+        .detail-disease-name {
+            font-size: 24px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 12px;
+        }
+
+        .collapsible {
+            margin-bottom: 16px;
+            border: 1px solid #e8e8e8;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .collapsible-header {
+            padding: 16px 20px;
+            background: #fafafa;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.3s;
+        }
+
+        .collapsible-header:hover {
+            background: #f0f0f0;
+        }
+
+        .collapsible-header h3 {
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+            margin: 0;
+        }
+
+        .collapsible-icon {
+            transition: transform 0.3s;
+        }
+
+        .collapsible.active .collapsible-icon {
+            transform: rotate(180deg);
+        }
+
+        .collapsible-content {
+            padding: 20px;
+            display: none;
+        }
+
+        .collapsible.active .collapsible-content {
+            display: block;
+        }
+
+        .qa-table {
+            width: 100%;
+        }
+
+        .qa-row {
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+        }
+
+        .qa-row:last-child {
+            border-bottom: none;
+        }
+
+        .qa-label {
+            color: #8c8c8c;
+            margin-bottom: 4px;
+        }
+
+        .qa-value {
+            color: #333;
+        }
+
+        .feature-group {
+            margin-bottom: 20px;
+        }
+
+        .feature-group-title {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 12px;
+        }
+
+        .feature-detail {
+            padding: 12px;
+            background: #fafafa;
+            border-left: 3px solid #52c41a;
+            margin-bottom: 8px;
+            border-radius: 4px;
+        }
+
+        .feature-name {
+            color: #333;
+            font-size: 14px;
+        }
+
+        .feature-score {
+            color: #52c41a;
+            font-size: 13px;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>PhytoOracle - 批量诊断</h1>
+        <div class="header-actions">
+            <button class="btn btn-success" onclick="exportToExcel()" id="exportBtn" style="display: none;">导出Excel</button>
+            <button class="btn" onclick="goBack()">返回首页</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- 上传区域 -->
+        <div class="upload-section" id="uploadSection">
+            <div class="upload-area" id="uploadArea" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" onclick="triggerFileInput()">
+                <div class="upload-icon">📁</div>
+                <div class="upload-text">拖拽图片到此处，或点击选择文件</div>
+                <div class="upload-hint">支持批量上传 JPG、PNG 格式图片</div>
+                <input type="file" id="fileInput" multiple accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
+            </div>
+        </div>
+
+        <!-- 单图查看区域 -->
+        <div class="viewer-section" id="viewerSection">
+            <div class="viewer-header">
+                <div class="viewer-title">诊断详情</div>
+                <div class="pagination">
+                    <button class="btn" onclick="previousImage()">← 上一张</button>
+                    <span class="page-info" id="pageInfo">1 / 15</span>
+                    <button class="btn" onclick="nextImage()">下一张 →</button>
+                </div>
+            </div>
+
+            <div class="viewer-content">
+                <div class="image-container">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23e8f5e9' width='400' height='400'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='20' fill='%23666'%3E玫瑰叶片 - 001%3C/text%3E%3C/svg%3E"
+                         alt="诊断图片" class="image-preview" id="currentImage">
+                </div>
+
+                <div class="result-summary">
+                    <h3>诊断结果</h3>
+                    <div class="disease-name" id="diseaseName">玫瑰黑斑病</div>
+                    <div class="confidence high" id="confidenceTag">置信度：95%</div>
+                    <div class="pathogen" id="pathogenInfo">病原体：Diplocarpon rosae (真菌)</div>
+
+                    <div class="key-features">
+                        <div class="feature-title">关键特征：</div>
+                        <ul class="feature-list" id="featureList">
+                            <li class="feature-item">症状类型：坏死斑点</li>
+                            <li class="feature-item">中心颜色：黑色</li>
+                            <li class="feature-item">边缘颜色：黄色晕圈</li>
+                            <li class="feature-item">发病位置：叶片主体</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 结果列表 -->
+        <div class="results-grid" id="resultsGrid">
+            <div class="results-header">
+                <h2>全部诊断结果</h2>
+                <div class="results-stats">
+                    共 <span id="totalCount">15</span> 张图片 |
+                    成功 <span style="color: #52c41a;" id="successCount">13</span> 张 |
+                    待确认 <span style="color: #fa8c16;" id="pendingCount">2</span> 张
+                </div>
+            </div>
+
+            <div class="results-list" id="resultsList">
+                <!-- 结果卡片将通过 JavaScript 动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 成功提示模态框 -->
+    <div class="modal" id="successModal">
+        <div class="modal-content">
+            <div class="modal-header">✓ 上传成功</div>
+            <div class="modal-body">
+                已成功上传 <span id="uploadCount">15</span> 张图片，诊断完成！
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="closeModal('successModal')">查看结果</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 详细诊断结果模态框 -->
+    <div class="modal detail-modal" id="detailModal">
+        <div class="modal-content">
+            <div class="detail-modal-header">
+                <div class="detail-modal-title" id="detailTitle">详细诊断结果</div>
+                <button class="btn" onclick="closeModal('detailModal')">✕ 关闭</button>
+            </div>
+            <div class="detail-modal-body">
+                <!-- 图片和诊断结果 -->
+                <div class="detail-image-result">
+                    <div class="detail-image">
+                        <img id="detailImage" src="" alt="诊断图片">
+                    </div>
+                    <div class="detail-result">
+                        <h2 style="margin-bottom: 16px;">诊断结果</h2>
+                        <div class="detail-disease-name" id="detailDiseaseName">玫瑰黑斑病</div>
+                        <div class="confidence high" id="detailConfidence">置信度：95%</div>
+                        <div class="pathogen" id="detailPathogen">病原体：Diplocarpon rosae (真菌)</div>
+
+                        <div class="key-features">
+                            <div class="feature-title">关键特征：</div>
+                            <ul class="feature-list" id="detailFeatures">
+                                <li class="feature-item">症状类型：坏死斑点</li>
+                                <li class="feature-item">中心颜色：黑色</li>
+                                <li class="feature-item">边缘颜色：黄色晕圈</li>
+                                <li class="feature-item">发病位置：叶片主体</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VLM问答对详情 -->
+                <div class="collapsible" id="detailVlmSection">
+                    <div class="collapsible-header" onclick="toggleCollapsible('detailVlmSection')">
+                        <h3>📋 VLM问答对详情</h3>
+                        <span class="collapsible-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <div class="qa-table">
+                            <div class="qa-row">
+                                <div class="qa-label">Q0.0 图片内容</div>
+                                <div class="qa-value">花卉图片 ✓</div>
+                            </div>
+                            <div class="qa-row">
+                                <div class="qa-label">Q0.1 图片类别</div>
+                                <div class="qa-value">叶部病害 ✓</div>
+                            </div>
+                            <div class="qa-row">
+                                <div class="qa-label">Q0.2 花卉属</div>
+                                <div class="qa-value">Rosa (蔷薇属) ✓</div>
+                            </div>
+                            <div class="qa-row">
+                                <div class="qa-label">Q1 症状类型</div>
+                                <div class="qa-value">坏死斑点 (necrosis_spot)</div>
+                            </div>
+                            <div class="qa-row">
+                                <div class="qa-label">Q2 中心颜色</div>
+                                <div class="qa-value">黑色 (black)</div>
+                            </div>
+                            <div class="qa-row">
+                                <div class="qa-label">Q3 边缘颜色</div>
+                                <div class="qa-value">黄色晕圈 (halo_yellow)</div>
+                            </div>
+                            <div class="qa-row">
+                                <div class="qa-label">Q4 发病位置</div>
+                                <div class="qa-value">叶片主体 (lamina)</div>
+                            </div>
+                            <div class="qa-row">
+                                <div class="qa-label">Q5 斑点大小</div>
+                                <div class="qa-value">中等 (medium)</div>
+                            </div>
+                            <div class="qa-row">
+                                <div class="qa-label">Q6 分布模式</div>
+                                <div class="qa-value">散点分布 (scattered)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 特征匹配详情 -->
+                <div class="collapsible active" id="detailMatchSection">
+                    <div class="collapsible-header" onclick="toggleCollapsible('detailMatchSection')">
+                        <h3>🎯 特征匹配详情</h3>
+                        <span class="collapsible-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <div style="text-align: center; font-size: 32px; font-weight: 600; color: #52c41a; margin-bottom: 20px;">
+                            92 / 100
+                        </div>
+
+                        <div class="feature-group">
+                            <div class="feature-group-title">主要特征 (权重80%)：</div>
+                            <div class="feature-detail">
+                                <div class="feature-name">• symptom_type: 坏死斑点 ✓</div>
+                                <div class="feature-score">得分：50 分</div>
+                            </div>
+                            <div class="feature-detail">
+                                <div class="feature-name">• color_border: 黄色晕圈 ✓</div>
+                                <div class="feature-score">得分：30 分</div>
+                            </div>
+                        </div>
+
+                        <div class="feature-group">
+                            <div class="feature-group-title">次要特征 (权重15%)：</div>
+                            <div class="feature-detail">
+                                <div class="feature-name">• color_center: 黑色 ✓</div>
+                                <div class="feature-score">得分：10 分</div>
+                            </div>
+                            <div class="feature-detail">
+                                <div class="feature-name">• location: 叶片 ✓</div>
+                                <div class="feature-score">得分：5 分</div>
+                            </div>
+                        </div>
+
+                        <div class="feature-group">
+                            <div class="feature-group-title">可选特征 (权重5%)：</div>
+                            <div class="feature-detail">
+                                <div class="feature-name">• size: 中等 ✓</div>
+                                <div class="feature-score">得分：2 分</div>
+                            </div>
+                            <div class="feature-detail">
+                                <div class="feature-name">• distribution: 散点分布 ✓</div>
+                                <div class="feature-score">得分：2 分</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 模拟诊断数据
+        const mockDiagnoses = [
+            { id: 1, image: '玫瑰叶片 - 001', disease: '玫瑰黑斑病', confidence: 95, level: 'high', pathogen: 'Diplocarpon rosae (真菌)', features: ['坏死斑点', '黑色中心', '黄色晕圈', '叶片主体'] },
+            { id: 2, image: '樱花叶片 - 002', disease: '樱花褐斑病', confidence: 88, level: 'high', pathogen: 'Cercospora sp. (真菌)', features: ['坏死斑点', '褐色中心', '无明显晕圈', '叶片主体'] },
+            { id: 3, image: '月季叶片 - 003', disease: '月季白粉病', confidence: 92, level: 'high', pathogen: 'Podosphaera pannosa (真菌)', features: ['白色粉末', '叶片表面', '叶脉附近', '散点分布'] },
+            { id: 4, image: '牡丹叶片 - 004', disease: '牡丹褐斑病', confidence: 78, level: 'medium', pathogen: 'Alternaria sp. (真菌)', features: ['坏死斑点', '褐色中心', '同心轮纹', '叶缘分布'] },
+            { id: 5, image: '菊花叶片 - 005', disease: '菊花斑枯病', confidence: 85, level: 'high', pathogen: 'Septoria chrysanthemella (真菌)', features: ['坏死斑点', '褐色斑点', '黄色晕圈', '叶片主体'] },
+            { id: 6, image: '茶花叶片 - 006', disease: '茶花炭疽病', confidence: 90, level: 'high', pathogen: 'Colletotrichum camelliae (真菌)', features: ['坏死斑点', '褐色中心', '凹陷斑点', '叶尖叶缘'] },
+            { id: 7, image: '杜鹃叶片 - 007', disease: '杜鹃褐斑病', confidence: 82, level: 'high', pathogen: 'Cercospora sp. (真菌)', features: ['坏死斑点', '褐色斑点', '紫色边缘', '叶片主体'] },
+            { id: 8, image: '百合叶片 - 008', disease: '百合叶枯病', confidence: 65, level: 'medium', pathogen: 'Botrytis elliptica (真菌)', features: ['坏死斑点', '褐色斑点', '水渍状', '叶尖开始'] },
+            { id: 9, image: '郁金香叶片 - 009', disease: '郁金香灰霉病', confidence: 87, level: 'high', pathogen: 'Botrytis tulipae (真菌)', features: ['坏死斑点', '灰褐色', '水渍状', '叶片主体'] },
+            { id: 10, image: '康乃馨叶片 - 010', disease: '康乃馨叶斑病', confidence: 91, level: 'high', pathogen: 'Alternaria dianthi (真菌)', features: ['坏死斑点', '褐色斑点', '同心轮纹', '叶片主体'] },
+            { id: 11, image: '兰花叶片 - 011', disease: '兰花炭疽病', confidence: 89, level: 'high', pathogen: 'Colletotrichum sp. (真菌)', features: ['坏死斑点', '黑褐色', '凹陷斑点', '叶尖叶缘'] },
+            { id: 12, image: '蔷薇叶片 - 012', disease: '蔷薇锈病', confidence: 94, level: 'high', pathogen: 'Phragmidium mucronatum (真菌)', features: ['橙黄色疱斑', '叶片背面', '粉末状', '散点分布'] },
+            { id: 13, image: '茉莉叶片 - 013', disease: '茉莉叶斑病', confidence: 80, level: 'high', pathogen: 'Cercospora sp. (真菌)', features: ['坏死斑点', '褐色斑点', '黄色晕圈', '叶片主体'] },
+            { id: 14, image: '山茶叶片 - 014', disease: '山茶藻斑病', confidence: 75, level: 'medium', pathogen: 'Cephaleuros virescens (藻类)', features: ['橙褐色斑块', '绒毛状', '叶片表面', '不规则形状'] },
+            { id: 15, image: '桂花叶片 - 015', disease: '桂花褐斑病', confidence: 86, level: 'high', pathogen: 'Pseudocercospora sp. (真菌)', features: ['坏死斑点', '褐色斑点', '灰白中心', '叶片主体'] }
+        ];
+
+        let currentIndex = 0;
+
+        // 文件上传处理
+        function triggerFileInput() {
+            document.getElementById('fileInput').click();
+        }
+
+        function handleFileSelect(event) {
+            const files = event.target.files;
+            if (files.length > 0) {
+                simulateUpload(files.length);
+            }
+        }
+
+        function handleDragOver(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            document.getElementById('uploadArea').classList.add('dragover');
+        }
+
+        function handleDragLeave(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            document.getElementById('uploadArea').classList.remove('dragover');
+        }
+
+        function handleDrop(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            document.getElementById('uploadArea').classList.remove('dragover');
+
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                simulateUpload(files.length);
+            }
+        }
+
+        function simulateUpload(count) {
+            // 模拟上传和诊断过程
+            document.getElementById('uploadCount').textContent = count;
+            document.getElementById('successModal').classList.add('active');
+
+            // 显示结果
+            setTimeout(() => {
+                showResults();
+            }, 500);
+        }
+
+        function showResults() {
+            document.getElementById('uploadSection').style.display = 'none';
+            document.getElementById('viewerSection').classList.add('active');
+            document.getElementById('resultsGrid').classList.add('active');
+            document.getElementById('exportBtn').style.display = 'block';
+
+            renderResultsList();
+            updateViewer();
+        }
+
+        function renderResultsList() {
+            const container = document.getElementById('resultsList');
+            container.innerHTML = '';
+
+            mockDiagnoses.forEach((diagnosis, index) => {
+                const card = document.createElement('div');
+                card.className = 'result-card' + (index === currentIndex ? ' active' : '');
+                card.onclick = () => selectImage(index);
+                card.ondblclick = () => showDetailModal(index);
+
+                card.innerHTML = `
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='120'%3E%3Crect fill='%23${diagnosis.level === 'high' ? 'e8f5e9' : 'fff7e6'}' width='200' height='120'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='14' fill='%23666'%3E${diagnosis.image}%3C/text%3E%3C/svg%3E"
+                         alt="${diagnosis.image}" class="result-thumbnail">
+                    <div class="result-info">
+                        <div class="result-disease">${diagnosis.disease}</div>
+                        <div class="result-confidence">置信度: ${diagnosis.confidence}%</div>
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+        }
+
+        function selectImage(index) {
+            currentIndex = index;
+            updateViewer();
+
+            // 更新卡片选中状态
+            const cards = document.querySelectorAll('.result-card');
+            cards.forEach((card, i) => {
+                card.classList.toggle('active', i === index);
+            });
+        }
+
+        function updateViewer() {
+            const diagnosis = mockDiagnoses[currentIndex];
+
+            // 更新图片
+            document.getElementById('currentImage').src = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23${diagnosis.level === 'high' ? 'e8f5e9' : 'fff7e6'}' width='400' height='400'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='20' fill='%23666'%3E${diagnosis.image}%3C/text%3E%3C/svg%3E`;
+
+            // 更新分页信息
+            document.getElementById('pageInfo').textContent = `${currentIndex + 1} / ${mockDiagnoses.length}`;
+
+            // 更新诊断信息
+            document.getElementById('diseaseName').textContent = diagnosis.disease;
+            document.getElementById('confidenceTag').textContent = `置信度：${diagnosis.confidence}%`;
+            document.getElementById('confidenceTag').className = `confidence ${diagnosis.level}`;
+            document.getElementById('pathogenInfo').textContent = `病原体：${diagnosis.pathogen}`;
+
+            // 更新特征列表
+            const featureList = document.getElementById('featureList');
+            featureList.innerHTML = diagnosis.features.map(f =>
+                `<li class="feature-item">${f}</li>`
+            ).join('');
+        }
+
+        function previousImage() {
+            if (currentIndex > 0) {
+                selectImage(currentIndex - 1);
+            }
+        }
+
+        function nextImage() {
+            if (currentIndex < mockDiagnoses.length - 1) {
+                selectImage(currentIndex + 1);
+            }
+        }
+
+        function exportToExcel() {
+            alert('正在导出Excel文件...\n\n将包含以下信息：\n- 图片文件名\n- 诊断结果\n- 置信度\n- 病原体信息\n- 关键特征');
+            console.log('导出数据:', mockDiagnoses);
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        function showDetailModal(index) {
+            const diagnosis = mockDiagnoses[index];
+
+            // 更新模态框标题
+            document.getElementById('detailTitle').textContent = `详细诊断结果 - ${diagnosis.image}`;
+
+            // 更新图片
+            document.getElementById('detailImage').src =
+                `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='500' height='400'%3E%3Crect fill='%23${diagnosis.level === 'high' ? 'e8f5e9' : 'fff7e6'}' width='500' height='400'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='24' fill='%23666'%3E${diagnosis.image}%3C/text%3E%3C/svg%3E`;
+
+            // 更新诊断结果
+            document.getElementById('detailDiseaseName').textContent = diagnosis.disease;
+            document.getElementById('detailConfidence').textContent = `置信度：${diagnosis.confidence}%`;
+            document.getElementById('detailConfidence').className = `confidence ${diagnosis.level}`;
+            document.getElementById('detailPathogen').textContent = `病原体：${diagnosis.pathogen}`;
+
+            // 更新关键特征
+            const featureList = document.getElementById('detailFeatures');
+            featureList.innerHTML = diagnosis.features.map(f =>
+                `<li class="feature-item">${f}</li>`
+            ).join('');
+
+            // 显示模态框
+            document.getElementById('detailModal').classList.add('active');
+        }
+
+        function toggleCollapsible(id) {
+            const section = document.getElementById(id);
+            section.classList.toggle('active');
+        }
+
+        function goBack() {
+            if (confirm('确定要返回首页吗？')) {
+                window.location.reload();
+            }
+        }
+
+        // 点击模态框背景关闭
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.classList.remove('active');
+            }
+        }
+    </script>
+</body>
+</html>

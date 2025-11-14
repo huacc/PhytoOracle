@@ -1,0 +1,52 @@
+{
+  "version": "1.0",
+  "description": "症状类型模糊匹配规则配置",
+  "last_updated": "2025-11-12",
+
+  "_comment_synonym_groups": "症状类型同义词组，组内症状类型可相互匹配",
+  "synonym_groups": {
+    "spot": {
+      "description": "斑点类症状",
+      "members": ["necrosis_spot", "bacterial_spot"],
+      "notes": "虽然病原不同，但视觉上都是斑点状病变"
+    },
+    "coating": {
+      "description": "覆盖物类症状",
+      "members": ["powdery_coating", "downy_coating"],
+      "notes": "都是表面覆盖物，但质地不同（粉末 vs 绒毛）"
+    },
+    "blotch": {
+      "description": "斑块类症状",
+      "members": ["necrosis_blotch"],
+      "notes": "大面积坏死病变"
+    },
+    "pustule": {
+      "description": "脓疱类症状",
+      "members": ["rust_pustule"],
+      "notes": "锈病特有的突起脓疱"
+    },
+    "chlorosis": {
+      "description": "失绿类症状",
+      "members": ["chlorosis"],
+      "notes": "叶绿素丧失导致的黄化"
+    }
+  },
+
+  "_comment_similarity_scores": "不同匹配类型的相似度分数",
+  "similarity_scores": {
+    "exact_match": 1.0,
+    "synonym_match": 0.9
+  },
+
+  "_comment_notes": [
+    "精确匹配：症状类型完全相同（分数1.0）",
+    "同义词匹配：属于同一synonym_group（如necrosis_spot和bacterial_spot，分数0.9）",
+    "同义词匹配的容差较低，因为不同症状类型可能指示不同病原体"
+  ],
+
+  "_comment_examples": [
+    "necrosis_spot 匹配 bacterial_spot: True (同属spot组)",
+    "powdery_coating 匹配 downy_coating: True (同属coating组)",
+    "necrosis_spot 匹配 powdery_coating: False (不同组)"
+  ]
+}

@@ -1,0 +1,156 @@
+{
+  "version": "v1.2",
+  "git_commit": "abc1234",
+  "description": "Feature Ontology for plant disease diagnosis - 特征本体定义",
+  "features": {
+    "symptom_type": {
+      "description": "Type of disease symptom observed on plant tissue",
+      "description_cn": "植物组织上观察到的病害症状类型",
+      "values": [
+        "necrosis_spot",
+        "necrosis_rot",
+        "chlorosis",
+        "chlorosis_spot",
+        "wilting",
+        "powdery_coating",
+        "rust",
+        "canker",
+        "gall"
+      ],
+      "synonyms": {
+        "necrosis_spot": ["dark_spot", "black_spot", "necrotic_lesion", "dead_spot"],
+        "necrosis_rot": ["brown_rot", "decay", "rotting"],
+        "chlorosis": ["yellowing", "yellow_leaves"],
+        "chlorosis_spot": ["yellow_spot", "pale_spot"],
+        "powdery_coating": ["white_powder", "powdery_mildew", "powder_like"],
+        "rust": ["orange_spots", "rusty_appearance"],
+        "canker": ["lesion", "wound"],
+        "wilting": ["drooping", "sagging"]
+      }
+    },
+    "color_center": {
+      "description": "Color of the center of the symptom area",
+      "description_cn": "症状区域中心的颜色",
+      "values": [
+        "black",
+        "brown",
+        "dark_brown",
+        "white",
+        "yellow",
+        "red",
+        "orange",
+        "gray",
+        "green"
+      ],
+      "synonyms": {
+        "black": ["very_dark", "dark_black", "charcoal"],
+        "brown": ["tan", "light_brown"],
+        "dark_brown": ["deep_brown", "chocolate"],
+        "white": ["pale", "off_white"],
+        "yellow": ["golden", "pale_yellow"],
+        "red": ["crimson", "scarlet"],
+        "orange": ["rusty_orange"],
+        "gray": ["grey", "ash"]
+      }
+    },
+    "color_border": {
+      "description": "Color of the border surrounding the symptom",
+      "description_cn": "症状周围边缘的颜色",
+      "values": [
+        "yellow",
+        "yellow_halo",
+        "brown",
+        "black",
+        "white",
+        "red",
+        "none"
+      ],
+      "synonyms": {
+        "yellow": ["yellowish", "pale_yellow"],
+        "yellow_halo": ["yellow", "yellowish", "light_yellow", "golden_halo"],
+        "brown": ["tan", "light_brown"],
+        "black": ["dark", "charcoal"],
+        "white": ["pale"],
+        "none": ["no_border", "absent"]
+      }
+    },
+    "texture": {
+      "description": "Surface texture of the symptom",
+      "description_cn": "症状表面的质地",
+      "values": [
+        "smooth",
+        "rough",
+        "powdery",
+        "fuzzy",
+        "wet",
+        "dry",
+        "scaly",
+        "cracked"
+      ],
+      "synonyms": {
+        "smooth": ["even", "flat"],
+        "rough": ["bumpy", "uneven"],
+        "powdery": ["dusty", "powder_like", "mealy"],
+        "fuzzy": ["hairy", "fluffy", "downy"],
+        "wet": ["moist", "damp", "watery"],
+        "dry": ["dried", "desiccated"],
+        "scaly": ["flaky", "peeling"],
+        "cracked": ["fissured", "split"]
+      }
+    },
+    "shape": {
+      "description": "Shape of the symptom area",
+      "description_cn": "症状区域的形状",
+      "values": [
+        "circular",
+        "irregular",
+        "linear",
+        "angular",
+        "oval",
+        "elongated"
+      ],
+      "synonyms": {
+        "circular": ["round", "ring_like"],
+        "irregular": ["random", "uneven"],
+        "linear": ["line_like", "streaky"],
+        "angular": ["sharp_edged", "polygonal"],
+        "oval": ["elliptical"],
+        "elongated": ["stretched", "extended"]
+      }
+    },
+    "distribution": {
+      "description": "Distribution pattern of symptoms on plant tissue",
+      "description_cn": "症状在植物组织上的分布模式",
+      "values": [
+        "scattered",
+        "clustered",
+        "uniform",
+        "edge",
+        "central",
+        "random"
+      ],
+      "synonyms": {
+        "scattered": ["dispersed", "spread_out"],
+        "clustered": ["grouped", "concentrated"],
+        "uniform": ["even", "regular"],
+        "edge": ["marginal", "peripheral"],
+        "central": ["middle", "center"],
+        "random": ["irregular", "unpattern"]
+      }
+    },
+    "size": {
+      "description": "Size of individual symptoms",
+      "description_cn": "单个症状的大小",
+      "values": [
+        "small",
+        "medium",
+        "large"
+      ],
+      "synonyms": {
+        "small": ["tiny", "pinpoint", "minute"],
+        "medium": ["moderate", "average"],
+        "large": ["big", "extensive", "widespread"]
+      }
+    }
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "version": "1.0",
+  "description": "颜色模糊匹配规则配置",
+  "last_updated": "2025-11-12",
+
+  "_comment_aliases": "颜色别名映射，用于处理VLM可能使用的不同颜色描述词",
+  "aliases": {
+    "deep_black": ["black", "dark_brown"],
+    "dark_color": ["black", "dark_brown", "brown"],
+    "yellowish": ["yellow", "light_yellow"],
+    "whitish": ["white", "grayish_white"],
+    "rusty": ["orange", "rust"],
+    "light_brown": ["brown", "tan"],
+    "pale_yellow": ["light_yellow", "yellow"]
+  },
+
+  "_comment_similar_colors": "相似颜色映射，用于处理颜色之间的相似性（非别名关系）",
+  "similar_colors": {
+    "black": ["dark_brown", "brown"],
+    "dark_brown": ["black", "brown"],
+    "brown": ["dark_brown"],
+    "yellow": ["light_yellow"],
+    "light_yellow": ["yellow"],
+    "white": ["grayish_white"],
+    "grayish_white": ["white"],
+    "orange": ["rust"],
+    "rust": ["orange"]
+  },
+
+  "_comment_color_groups": "颜色组，用于检查颜色是否属于同一色系",
+  "color_groups": {
+    "dark_group": ["black", "dark_brown", "brown"],
+    "yellow_group": ["yellow", "light_yellow"],
+    "white_group": ["white", "grayish_white"],
+    "rust_group": ["orange", "rust"]
+  },
+
+  "_comment_similarity_scores": "不同匹配类型的相似度分数",
+  "similarity_scores": {
+    "exact_match": 1.0,
+    "alias_match": 0.9,
+    "similar_color_match": 0.7,
+    "same_group_match": 0.6
+  },
+
+  "_comment_notes": [
+    "精确匹配：颜色值完全相同",
+    "别名匹配：通过aliases映射关系匹配（如deep_black匹配black）",
+    "相似颜色匹配：通过similar_colors映射关系匹配（如black匹配dark_brown）",
+    "同色组匹配：属于同一color_group（如brown和dark_brown都属于dark_group）"
+  ]
+}

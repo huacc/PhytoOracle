@@ -1,0 +1,30 @@
+{
+  "version": "1.0",
+  "description": "特征维度权重配置（用于单个特征的加权）",
+  "last_updated": "2025-11-13",
+  "weights": {
+    "symptom_type": 0.30,
+    "color_center": 0.25,
+    "color_border": 0.15,
+    "size": 0.15,
+    "location": 0.10,
+    "distribution": 0.05
+  },
+  "match_threshold": 0.6,
+  "notes": {
+    "symptom_type": "症状类型权重最高（医学诊断的核心特征）",
+    "color_center": "症状中心颜色权重次之",
+    "color_border": "症状边缘颜色权重",
+    "size": "尺寸权重",
+    "location": "位置权重",
+    "distribution": "分布模式权重",
+    "match_threshold": "特征匹配阈值，低于此值不计入匹配"
+  },
+  "changelog": [
+    {
+      "version": "1.0",
+      "date": "2025-11-13",
+      "changes": "初始版本，从P2.3的FeatureMatcher提取"
+    }
+  ]
+}

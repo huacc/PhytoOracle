@@ -1,0 +1,23 @@
+# PhytoOracle Frontend Demo - 依赖清单
+
+# Streamlit框架
+streamlit>=1.38.0
+
+# 数据处理
+pandas>=2.1.0
+numpy>=1.24.0
+
+# 数据验证
+pydantic>=2.0.0
+
+# JSON处理
+orjson>=3.9.0
+
+# 图像处理
+pillow>=10.0.0
+
+# 可视化（阶段2新增）
+plotly>=5.17.0
+
+# 工具库
+python-dateutil>=2.8.0

@@ -1,0 +1,41 @@
+{
+  "disease_id": "cherry_brown_rot",
+  "disease_name": "樱花褐腐病",
+  "disease_name_en": "Cherry Brown Rot",
+  "version": "v2.0",
+  "git_commit": "jkl3456",
+  "updated_at": "2025-10-15T09:20:00Z",
+  "host_plants": ["Prunus"],
+  "pathogen": {
+    "scientific_name": "Monilinia fructicola",
+    "common_name": "褐腐病菌"
+  },
+  "description": "樱花褐腐病由Monilinia fructicola真菌引起，主要危害花朵和果实，导致褐色腐烂。",
+  "feature_vector": {
+    "major": {
+      "symptom_type": "necrosis_rot",
+      "color_center": "brown",
+      "color_border": "black"
+    },
+    "minor": {
+      "texture": "wet",
+      "shape": "irregular"
+    },
+    "optional": {
+      "distribution": "clustered",
+      "size": "large"
+    }
+  },
+  "treatment_suggestions": [
+    "剪除病枝并销毁，防止病原菌扩散",
+    "喷施多菌灵或甲基托布津",
+    "改善通风，减少湿度",
+    "果实套袋保护"
+  ],
+  "prevention_measures": [
+    "选择抗病品种",
+    "及时清理病果和落叶",
+    "花期喷施保护性杀菌剂",
+    "合理修剪，保持树冠通风"
+  ]
+}

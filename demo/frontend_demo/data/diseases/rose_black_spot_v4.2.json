@@ -1,0 +1,41 @@
+{
+  "disease_id": "rose_black_spot",
+  "disease_name": "玫瑰黑斑病",
+  "disease_name_en": "Rose Black Spot",
+  "version": "v4.2",
+  "git_commit": "def5678",
+  "updated_at": "2025-11-10T10:00:00Z",
+  "host_plants": ["Rosa"],
+  "pathogen": {
+    "scientific_name": "Diplocarpon rosae",
+    "common_name": "黑斑病菌"
+  },
+  "description": "玫瑰黑斑病是由Diplocarpon rosae真菌引起的常见玫瑰病害，主要危害叶片，导致黄化脱落。",
+  "feature_vector": {
+    "major": {
+      "symptom_type": "necrosis_spot",
+      "color_center": "black",
+      "color_border": "yellow_halo"
+    },
+    "minor": {
+      "texture": "smooth",
+      "shape": "circular"
+    },
+    "optional": {
+      "distribution": "scattered",
+      "size": "small"
+    }
+  },
+  "treatment_suggestions": [
+    "移除感染叶片并销毁，防止病原菌传播",
+    "喷施杀菌剂（如代森锰锌、甲基托布津）",
+    "改善通风条件，降低湿度，减少病害发生",
+    "避免过度浇水和叶面喷水"
+  ],
+  "prevention_measures": [
+    "选择抗病品种",
+    "合理密植，保持通风",
+    "及时清理落叶和病残体",
+    "定期喷施保护性杀菌剂"
+  ]
+}

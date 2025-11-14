@@ -1,0 +1,70 @@
+{
+  "question_id": "Q0.2",
+  "version": "v1.0",
+  "last_modified": "2025-11-12T22:49:11.529278",
+  "purpose": {
+    "task": "Identify the genus (属) of this flower",
+    "context": "The image contains an ornamental flower (confirmed by Q0.1)",
+    "why_important": "Accurate genus identification is critical for subsequent disease diagnosis"
+  },
+  "role": {
+    "role": "plant disease diagnosis assistant",
+    "expertise": [
+      "plant taxonomy",
+      "visual morphology analysis",
+      "flower identification"
+    ],
+    "constraints": [
+      "focus only on ornamental flowers",
+      "avoid wild plant identification"
+    ]
+  },
+  "observation": {
+    "visual_method": "Compound Feature Description (方法论v5.0)",
+    "visual_clues": {
+      "Rosa": "Compound leaves with 5-7 leaflets, thorny stems, layered petals",
+      "Prunus": "Simple oval leaves with serrated edges, 5-petal flowers, smooth bark",
+      "Tulipa": "Long narrow leaves, cup-shaped flowers, smooth stem without branches",
+      "Dianthus": "Narrow linear leaves, fringed petal edges, swollen stem nodes",
+      "Paeonia": "Large compound leaves, large multi-layered flowers, thick stems"
+    },
+    "focus_areas": [
+      "leaf shape and arrangement",
+      "stem texture and thorns",
+      "petal arrangement"
+    ]
+  },
+  "options": {
+    "choices": [
+      {
+        "label": "Rosa",
+        "description": "玫瑰/月季属"
+      },
+      {
+        "label": "Prunus",
+        "description": "樱花/樱桃属"
+      },
+      {
+        "label": "Tulipa",
+        "description": "郁金香属"
+      },
+      {
+        "label": "Dianthus",
+        "description": "康乃馨属"
+      },
+      {
+        "label": "Paeonia",
+        "description": "牡丹属"
+      }
+    ],
+    "allow_unknown": true,
+    "allow_uncertain": false
+  },
+  "format": {
+    "response_schema": "Q02Response",
+    "constraints": [
+      "confidence must reflect actual certainty",
+      "reasoning should be brief"
+    ]
+  }
+}

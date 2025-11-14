@@ -1,0 +1,93 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.3, pytest-8.4.2, pluggy-1.6.0 -- C:\Program Files\Python312\python.exe
+cachedir: .pytest_cache
+rootdir: D:\项目管理\PhytoOracle\backend
+configfile: pyproject.toml
+plugins: anyio-3.7.1, asyncio-1.2.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 22 items
+
+backend\tests\unit\test_p2_2_vlm_client.py::TestVLMExceptions::test_vlm_exception_basic PASSED
+backend\tests\unit\test_p2_2_vlm_client.py::TestVLMExceptions::test_provider_unavailable_exception PASSED
+backend\tests\unit\test_p2_2_vlm_client.py::TestVLMExceptions::test_all_providers_failed_exception PASSED
+backend\tests\unit\test_p2_2_vlm_client.py::TestVLMExceptions::test_validation_exception PASSED
+backend\tests\unit\test_p2_2_vlm_client.py::TestVLMExceptions::test_timeout_exception PASSED
+backend\tests\unit\test_p2_2_vlm_client.py::TestVLMExceptions::test_quota_exceeded_exception PASSED
+backend\tests\unit\test_p2_2_vlm_client.py::TestCacheManager::test_cache_initialization PASSED
+backend\tests\unit\test_p2_2_vlm_client.py::TestCacheManager::test_cache_set_and_get PASSED
+backend\tests\unit\test_p2_2_vlm_client.py::TestCacheManager::test_cache_miss PASSED
+backend\tests\unit\test_p2_2_vlm_client.py::TestCacheManager::test_cache_key_uniqueness PASSED
+backend\tests\unit\test_p2_2_vlm_client.py::TestCacheManager::test_cache_ttl_expiration PASSED
+backend\tests\unit\test_p2_2_vlm_client.py::TestCacheManager::test_cache_clear PASSED
+backend\tests\unit\test_p2_2_vlm_client.py::TestCacheManager::test_cache_remove_expired PASSED
+backend\tests\unit\test_p2_2_vlm_client.py::TestCacheManager::test_cache_stats PASSED
+backend\tests\unit\test_p2_2_vlm_client.py::TestMultiProviderVLMClient::test_client_initialization_without_api_keys PASSED
+backend\tests\unit\test_p2_2_vlm_client.py::TestMultiProviderVLMClient::test_client_initialization_with_fake_api_keys PASSED
+backend\tests\unit\test_p2_2_vlm_client.py::TestMultiProviderVLMClient::test_client_custom_provider_order SKIPPED
+backend\tests\unit\test_p2_2_vlm_client.py::TestMultiProviderVLMClient::test_client_cache_enabled PASSED
+backend\tests\unit\test_p2_2_vlm_client.py::TestMultiProviderVLMClient::test_client_cache_disabled PASSED
+backend\tests\unit\test_p2_2_vlm_client.py::TestMultiProviderVLMClient::test_client_get_available_providers PASSED
+backend\tests\unit\test_p2_2_vlm_client.py::TestMultiProviderVLMClient::test_client_query_structured_real_api FAILED
+backend\tests\unit\test_p2_2_vlm_client.py::TestMultiProviderVLMClient::test_client_cache_functionality PASSED
+
+================================== FAILURES ===================================
+______ TestMultiProviderVLMClient.test_client_query_structured_real_api _______
+backend\tests\unit\test_p2_2_vlm_client.py:351: in test_client_query_structured_real_api
+    response = client.query_structured(
+backend\infrastructure\llm\vlm_client.py:484: in query_structured
+    raise AllProvidersFailedException(
+E   backend.infrastructure.llm.vlm_exceptions.AllProvidersFailedException: All providers failed: All 4 providers failed to process request - Details: {'providers_tried': ['qwen', 'chatgpt', 'grok', 'claude'], 'available_providers': ['qwen'], 'last_error': '<failed_attempts>\n\n<generation number="1">\n<exception>\n    Error code: 401 - {\'code\': \'InvalidApiKey\', \'message\': \'Invalid API-key provided.\', \'request_id\': \'f48a23ff-f469-4efd-b206-0bcbf5fe33a4\'}\n</exception>\n<completion>\n    None\n</completion>\n</generation>\n\n<generation number="2">\n<exception>\n    Error code: 401 - {\'code\': \'InvalidApiKey\', \'message\': \'Invalid API-key provided.\', \'request_id\': \'0deab559-51fc-4a49-8037-77dd1e520174\'}\n</exception>\n<completion>\n    None\n</completion>\n</generation>\n\n<generation number="3">\n<exception>\n    Error code: 401 - {\'code\': \'InvalidApiKey\', \'message\': \'Invalid API-key provided.\', \'request_id\': \'93773ea2-d0d0-4177-9a8b-261305b0c6d7\'}\n</exception>\n<completion>\n    None\n</completion>\n</generation>\n\n</failed_attempts>\n\n<last_exception>\n    Error code: 401 - {\'code\': \'InvalidApiKey\', \'message\': \'Invalid API-key provided.\', \'request_id\': \'93773ea2-d0d0-4177-9a8b-261305b0c6d7\'}\n</last_exception>', 'last_error_type': 'InstructorRetryException'}
+
+During handling of the above exception, another exception occurred:
+backend\tests\unit\test_p2_2_vlm_client.py:369: in test_client_query_structured_real_api
+    pytest.fail(f"所有 Provider 都失败: {e}")
+E   Failed: 所有 Provider 都失败: All providers failed: All 4 providers failed to process request - Details: {'providers_tried': ['qwen', 'chatgpt', 'grok', 'claude'], 'available_providers': ['qwen'], 'last_error': '<failed_attempts>\n\n<generation number="1">\n<exception>\n    Error code: 401 - {\'code\': \'InvalidApiKey\', \'message\': \'Invalid API-key provided.\', \'request_id\': \'f48a23ff-f469-4efd-b206-0bcbf5fe33a4\'}\n</exception>\n<completion>\n    None\n</completion>\n</generation>\n\n<generation number="2">\n<exception>\n    Error code: 401 - {\'code\': \'InvalidApiKey\', \'message\': \'Invalid API-key provided.\', \'request_id\': \'0deab559-51fc-4a49-8037-77dd1e520174\'}\n</exception>\n<completion>\n    None\n</completion>\n</generation>\n\n<generation number="3">\n<exception>\n    Error code: 401 - {\'code\': \'InvalidApiKey\', \'message\': \'Invalid API-key provided.\', \'request_id\': \'93773ea2-d0d0-4177-9a8b-261305b0c6d7\'}\n</exception>\n<completion>\n    None\n</completion>\n</generation>\n\n</failed_attempts>\n\n<last_exception>\n    Error code: 401 - {\'code\': \'InvalidApiKey\', \'message\': \'Invalid API-key provided.\', \'request_id\': \'93773ea2-d0d0-4177-9a8b-261305b0c6d7\'}\n</last_exception>', 'last_error_type': 'InstructorRetryException'}
+------------------------------ Captured log call ------------------------------
+WARNING  backend.infrastructure.llm.vlm_client:vlm_client.py:260 Provider 'chatgpt' not found in config
+WARNING  backend.infrastructure.llm.vlm_client:vlm_client.py:271 Provider 'grok' API Key not found (environment variable: VLM_GROK_API_KEY)
+WARNING  backend.infrastructure.llm.vlm_client:vlm_client.py:260 Provider 'claude' not found in config
+WARNING  backend.infrastructure.llm.vlm_client:vlm_client.py:480 Provider 'qwen' failed: InstructorRetryException: <failed_attempts>
+
+<generation number="1">
+<exception>
+    Error code: 401 - {'code': 'InvalidApiKey', 'message': 'Invalid API-key provided.', 'request_id': 'f48a23ff-f469-4efd-b206-0bcbf5fe33a4'}
+</exception>
+<completion>
+    None
+</completion>
+</generation>
+
+<generation number="2">
+<exception>
+    Error code: 401 - {'code': 'InvalidApiKey', 'message': 'Invalid API-key provided.', 'request_id': '0deab559-51fc-4a49-8037-77dd1e520174'}
+</exception>
+<completion>
+    None
+</completion>
+</generation>
+
+<generation number="3">
+<exception>
+    Error code: 401 - {'code': 'InvalidApiKey', 'message': 'Invalid API-key provided.', 'request_id': '93773ea2-d0d0-4177-9a8b-261305b0c6d7'}
+</exception>
+<completion>
+    None
+</completion>
+</generation>
+
+</failed_attempts>
+
+<last_exception>
+    Error code: 401 - {'code': 'InvalidApiKey', 'message': 'Invalid API-key provided.', 'request_id': '93773ea2-d0d0-4177-9a8b-261305b0c6d7'}
+</last_exception>
+=========================== short test summary info ===========================
+FAILED backend\tests\unit\test_p2_2_vlm_client.py::TestMultiProviderVLMClient::test_client_query_structured_real_api
+================== 1 failed, 20 passed, 1 skipped in 36.68s ===================
+================================================================================
+Running VLM Integration Tests
+================================================================================
+VLM_QWEN_API_KEY: sk-45d67ef...
+VLM_GEMINI_API_KEY: AIzaSyCox6...
+VLM_GLM_API_KEY: 885350c952...
+VLM_GROK_API_KEY: xai-cudGYj...
+================================================================================

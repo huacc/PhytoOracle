@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhytoOracle - 本体结构管理</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: #fff;
+            border-bottom: 1px solid #e8e8e8;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 500;
+            color: #1890ff;
+        }
+
+        .header-info {
+            color: #999;
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            background: #fff;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            color: #1890ff;
+            border-color: #1890ff;
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            height: calc(100vh - 65px);
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .sidebar {
+            background: #fff;
+            border-right: 1px solid #e8e8e8;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #e8e8e8;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .ontology-list {
+            list-style: none;
+        }
+
+        .ontology-item {
+            padding: 16px 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .ontology-item:hover {
+            background: #f5f5f5;
+        }
+
+        .ontology-item.active {
+            background: #e6f7ff;
+            border-left-color: #1890ff;
+            color: #1890ff;
+        }
+
+        .ontology-icon {
+            font-size: 18px;
+        }
+
+        .ontology-name {
+            flex: 1;
+        }
+
+        .ontology-badge {
+            background: #f0f0f0;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .ontology-item.active .ontology-badge {
+            background: #1890ff;
+            color: #fff;
+        }
+
+        .content-area {
+            background: #f5f5f5;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        .content-card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 24px;
+        }
+
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #e8e8e8;
+        }
+
+        .content-title {
+            font-size: 20px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .readonly-badge {
+            background: #f0f0f0;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .schema-info {
+            background: #f9f9f9;
+            padding: 16px;
+            border-radius: 4px;
+            margin-bottom: 24px;
+        }
+
+        .info-row {
+            display: flex;
+            padding: 8px 0;
+        }
+
+        .info-label {
+            width: 120px;
+            color: #8c8c8c;
+            font-size: 14px;
+        }
+
+        .info-value {
+            flex: 1;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .field-section {
+            margin-bottom: 32px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #1890ff;
+        }
+
+        .field-list {
+            display: grid;
+            gap: 16px;
+        }
+
+        .field-item {
+            border: 1px solid #e8e8e8;
+            border-radius: 8px;
+            padding: 16px;
+            transition: all 0.3s;
+        }
+
+        .field-item:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .field-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            cursor: pointer;
+        }
+
+        .field-name {
+            font-weight: 500;
+            color: #333;
+            font-size: 15px;
+        }
+
+        .field-type {
+            background: #e6f7ff;
+            color: #1890ff;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .field-description {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .field-details {
+            display: none;
+            padding-top: 12px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .field-item.expanded .field-details {
+            display: block;
+        }
+
+        .field-item.expanded .expand-icon {
+            transform: rotate(180deg);
+        }
+
+        .expand-icon {
+            transition: transform 0.3s;
+            color: #999;
+        }
+
+        .enum-values {
+            margin-top: 8px;
+        }
+
+        .enum-title {
+            font-size: 13px;
+            color: #8c8c8c;
+            margin-bottom: 8px;
+        }
+
+        .enum-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .enum-tag {
+            background: #f0f0f0;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #333;
+        }
+
+        .property-row {
+            display: flex;
+            padding: 6px 0;
+            font-size: 13px;
+        }
+
+        .property-label {
+            width: 100px;
+            color: #8c8c8c;
+        }
+
+        .property-value {
+            flex: 1;
+            color: #333;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>PhytoOracle - 本体结构管理</h1>
+        <div style="display: flex; gap: 12px; align-items: center;">
+            <span class="header-info">只读模式</span>
+            <button class="btn" onclick="goBack()">返回首页</button>
+        </div>
+    </div>
+
+    <div class="main-layout">
+        <!-- 左侧边栏 -->
+        <div class="sidebar">
+            <div class="sidebar-header">本体类型</div>
+            <ul class="ontology-list">
+                <li class="ontology-item active" onclick="selectOntology('feature')">
+                    <span class="ontology-icon">🎯</span>
+                    <span class="ontology-name">特征本体</span>
+                    <span class="ontology-badge">8</span>
+                </li>
+                <li class="ontology-item" onclick="selectOntology('disease')">
+                    <span class="ontology-icon">🦠</span>
+                    <span class="ontology-name">疾病本体</span>
+                    <span class="ontology-badge">6</span>
+                </li>
+                <li class="ontology-item" onclick="selectOntology('plant')">
+                    <span class="ontology-icon">🌸</span>
+                    <span class="ontology-name">宿主本体</span>
+                    <span class="ontology-badge">5</span>
+                </li>
+                <li class="ontology-item" onclick="selectOntology('host_disease')">
+                    <span class="ontology-icon">🔗</span>
+                    <span class="ontology-name">宿主-疾病关联</span>
+                    <span class="ontology-badge">4</span>
+                </li>
+                <li class="ontology-item" onclick="selectOntology('treatment')">
+                    <span class="ontology-icon">💊</span>
+                    <span class="ontology-name">治疗本体</span>
+                    <span class="ontology-badge">3</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- 右侧内容区 -->
+        <div class="content-area" id="contentArea">
+            <!-- 内容将通过 JavaScript 动态加载 -->
+        </div>
+    </div>
+
+    <script>
+        const ontologies = {
+            feature: {
+                title: '特征本体 (Feature Ontology)',
+                file: 'feature_ontology.json',
+                description: '定义花卉疾病的视觉特征维度和枚举值，用于VLM识别和匹配',
+                version: '1.0.0',
+                lastModified: '2025-11-10',
+                fields: [
+                    {
+                        name: 'symptom_type',
+                        title: '症状类型',
+                        type: 'enum',
+                        description: '病害的主要症状表现形式',
+                        required: true,
+                        weight: 50,
+                        enums: ['necrosis_spot', 'powdery_mildew', 'rust', 'mosaic', 'wilt', 'rot', 'canker', 'gall']
+                    },
+                    {
+                        name: 'color_center',
+                        title: '中心颜色',
+                        type: 'enum',
+                        description: '病斑中心区域的颜色特征',
+                        required: false,
+                        weight: 10,
+                        enums: ['black', 'brown', 'gray', 'white', 'yellow', 'orange', 'red', 'purple']
+                    },
+                    {
+                        name: 'color_border',
+                        title: '边缘颜色',
+                        type: 'enum',
+                        description: '病斑边缘或晕圈的颜色特征',
+                        required: false,
+                        weight: 30,
+                        enums: ['halo_yellow', 'halo_red', 'halo_purple', 'no_halo', 'dark_brown', 'black_border']
+                    },
+                    {
+                        name: 'location',
+                        title: '发病位置',
+                        type: 'enum',
+                        description: '病害在器官上的具体位置',
+                        required: true,
+                        weight: 5,
+                        enums: ['lamina', 'leaf_tip', 'leaf_edge', 'leaf_base', 'vein', 'petiole', 'stem', 'flower']
+                    },
+                    {
+                        name: 'size',
+                        title: '斑点大小',
+                        type: 'enum',
+                        description: '病斑的尺寸大小分类',
+                        required: false,
+                        weight: 2,
+                        enums: ['pinpoint', 'small', 'medium', 'large', 'coalesced']
+                    },
+                    {
+                        name: 'distribution',
+                        title: '分布模式',
+                        type: 'enum',
+                        description: '病斑在器官上的分布模式',
+                        required: false,
+                        weight: 2,
+                        enums: ['scattered', 'clustered', 'linear', 'circular', 'marginal', 'uniform']
+                    },
+                    {
+                        name: 'coverage',
+                        title: '覆盖程度',
+                        type: 'enum',
+                        description: '病害覆盖器官的面积比例',
+                        required: false,
+                        weight: 1,
+                        enums: ['sparse', 'moderate', 'dense', 'confluent']
+                    },
+                    {
+                        name: 'edge_clarity',
+                        title: '边缘清晰度',
+                        type: 'enum',
+                        description: '病斑边界的清晰程度',
+                        required: false,
+                        weight: 1,
+                        enums: ['sharp', 'diffuse', 'irregular', 'concentric']
+                    }
+                ]
+            },
+            disease: {
+                title: '疾病本体 (Disease Ontology)',
+                file: 'disease_schema.json',
+                description: '定义疾病记录的标准结构和字段规范',
+                version: '1.0.0',
+                lastModified: '2025-11-09',
+                fields: [
+                    {
+                        name: 'disease_id',
+                        title: '疾病ID',
+                        type: 'string',
+                        description: '疾病的唯一标识符',
+                        required: true,
+                        pattern: '^[a-z_]+$'
+                    },
+                    {
+                        name: 'disease_name_cn',
+                        title: '中文名称',
+                        type: 'string',
+                        description: '疾病的中文标准名称',
+                        required: true
+                    },
+                    {
+                        name: 'disease_name_en',
+                        title: '英文名称',
+                        type: 'string',
+                        description: '疾病的英文标准名称',
+                        required: true
+                    },
+                    {
+                        name: 'pathogen',
+                        title: '病原体信息',
+                        type: 'object',
+                        description: '致病微生物的详细信息',
+                        required: true,
+                        properties: ['type', 'genus', 'species', 'full_name']
+                    },
+                    {
+                        name: 'feature_profile',
+                        title: '特征轮廓',
+                        type: 'object',
+                        description: '该疾病的特征值和权重配置',
+                        required: true,
+                        properties: ['primary', 'secondary', 'optional']
+                    },
+                    {
+                        name: 'diagnosis_threshold',
+                        title: '诊断阈值',
+                        type: 'number',
+                        description: '确认该疾病所需的最低匹配分数',
+                        required: true,
+                        range: [0, 100]
+                    }
+                ]
+            },
+            plant: {
+                title: '宿主本体 (Plant Host Ontology)',
+                file: 'plant_host_schema.json',
+                description: '定义花卉宿主植物的分类和属性结构',
+                version: '1.0.0',
+                lastModified: '2025-11-08',
+                fields: [
+                    {
+                        name: 'host_id',
+                        title: '宿主ID',
+                        type: 'string',
+                        description: '植物宿主的唯一标识符',
+                        required: true
+                    },
+                    {
+                        name: 'genus',
+                        title: '属名',
+                        type: 'string',
+                        description: '植物的拉丁属名',
+                        required: true
+                    },
+                    {
+                        name: 'common_name_cn',
+                        title: '中文俗名',
+                        type: 'array',
+                        description: '常用的中文名称列表',
+                        required: true
+                    },
+                    {
+                        name: 'family',
+                        title: '科名',
+                        type: 'string',
+                        description: '植物分类学科名',
+                        required: true
+                    },
+                    {
+                        name: 'susceptible_organs',
+                        title: '易感器官',
+                        type: 'array',
+                        description: '容易受病害侵染的植物器官',
+                        required: true,
+                        enums: ['leaf', 'stem', 'flower', 'fruit', 'root']
+                    }
+                ]
+            },
+            host_disease: {
+                title: '宿主-疾病关联本体 (Host-Disease Association)',
+                file: 'host_disease_schema.json',
+                description: '定义宿主与疾病之间的关联关系结构',
+                version: '1.0.0',
+                lastModified: '2025-11-07',
+                fields: [
+                    {
+                        name: 'association_id',
+                        title: '关联ID',
+                        type: 'string',
+                        description: '关联关系的唯一标识符',
+                        required: true
+                    },
+                    {
+                        name: 'host_id',
+                        title: '宿主ID',
+                        type: 'string',
+                        description: '关联的植物宿主ID（外键）',
+                        required: true
+                    },
+                    {
+                        name: 'disease_ids',
+                        title: '疾病ID列表',
+                        type: 'array',
+                        description: '该宿主可能感染的疾病ID列表',
+                        required: true
+                    },
+                    {
+                        name: 'prevalence',
+                        title: '流行度',
+                        type: 'enum',
+                        description: '该疾病在该宿主上的常见程度',
+                        required: false,
+                        enums: ['common', 'occasional', 'rare']
+                    }
+                ]
+            },
+            treatment: {
+                title: '治疗本体 (Treatment Ontology)',
+                file: 'treatment_schema.json',
+                description: '定义疾病治疗方案的结构（预留接口）',
+                version: '0.1.0',
+                lastModified: '2025-11-06',
+                fields: [
+                    {
+                        name: 'treatment_id',
+                        title: '治疗方案ID',
+                        type: 'string',
+                        description: '治疗方案的唯一标识符',
+                        required: true
+                    },
+                    {
+                        name: 'disease_id',
+                        title: '目标疾病ID',
+                        type: 'string',
+                        description: '该方案针对的疾病ID',
+                        required: true
+                    },
+                    {
+                        name: 'methods',
+                        title: '治疗方法',
+                        type: 'array',
+                        description: '具体的治疗手段列表',
+                        required: true,
+                        enums: ['chemical', 'biological', 'cultural', 'physical']
+                    }
+                ]
+            }
+        };
+
+        let currentOntology = 'feature';
+
+        function selectOntology(type) {
+            currentOntology = type;
+
+            // 更新侧边栏选中状态
+            const items = document.querySelectorAll('.ontology-item');
+            items.forEach(item => item.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+
+            // 渲染内容
+            renderOntologyContent(type);
+        }
+
+        function renderOntologyContent(type) {
+            const ontology = ontologies[type];
+            const contentArea = document.getElementById('contentArea');
+
+            let html = `
+                <div class="content-card">
+                    <div class="content-header">
+                        <div class="content-title">${ontology.title}</div>
+                        <div class="readonly-badge">只读</div>
+                    </div>
+
+                    <div class="schema-info">
+                        <div class="info-row">
+                            <div class="info-label">文件名称：</div>
+                            <div class="info-value">${ontology.file}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">描述：</div>
+                            <div class="info-value">${ontology.description}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">版本：</div>
+                            <div class="info-value">${ontology.version}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">最后修改：</div>
+                            <div class="info-value">${ontology.lastModified}</div>
+                        </div>
+                    </div>
+
+                    <div class="field-section">
+                        <div class="section-title">字段定义 (${ontology.fields.length} 个字段)</div>
+                        <div class="field-list">
+            `;
+
+            ontology.fields.forEach((field, index) => {
+                html += `
+                    <div class="field-item" id="field_${index}">
+                        <div class="field-header" onclick="toggleField(${index})">
+                            <div>
+                                <span class="field-name">${field.title} (${field.name})</span>
+                                ${field.required ? '<span style="color: #ff4d4f; margin-left: 8px;">*</span>' : ''}
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <span class="field-type">${field.type}</span>
+                                <span class="expand-icon">▼</span>
+                            </div>
+                        </div>
+                        <div class="field-description">${field.description}</div>
+
+                        <div class="field-details">
+                            ${field.required !== undefined ? `
+                                <div class="property-row">
+                                    <div class="property-label">必填字段：</div>
+                                    <div class="property-value">${field.required ? '是' : '否'}</div>
+                                </div>
+                            ` : ''}
+
+                            ${field.weight !== undefined ? `
+                                <div class="property-row">
+                                    <div class="property-label">匹配权重：</div>
+                                    <div class="property-value">${field.weight}%</div>
+                                </div>
+                            ` : ''}
+
+                            ${field.pattern !== undefined ? `
+                                <div class="property-row">
+                                    <div class="property-label">格式规则：</div>
+                                    <div class="property-value"><code>${field.pattern}</code></div>
+                                </div>
+                            ` : ''}
+
+                            ${field.range !== undefined ? `
+                                <div class="property-row">
+                                    <div class="property-label">取值范围：</div>
+                                    <div class="property-value">[${field.range[0]}, ${field.range[1]}]</div>
+                                </div>
+                            ` : ''}
+
+                            ${field.properties !== undefined ? `
+                                <div class="property-row">
+                                    <div class="property-label">子属性：</div>
+                                    <div class="property-value">${field.properties.join(', ')}</div>
+                                </div>
+                            ` : ''}
+
+                            ${field.enums !== undefined ? `
+                                <div class="enum-values">
+                                    <div class="enum-title">枚举值 (${field.enums.length} 个)：</div>
+                                    <div class="enum-list">
+                                        ${field.enums.map(e => `<span class="enum-tag">${e}</span>`).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            contentArea.innerHTML = html;
+        }
+
+        function toggleField(index) {
+            const field = document.getElementById(`field_${index}`);
+            field.classList.toggle('expanded');
+        }
+
+        function goBack() {
+            if (confirm('确定要返回首页吗？')) {
+                alert('返回首页');
+            }
+        }
+
+        // 初始化加载
+        renderOntologyContent('feature');
+    </script>
+</body>
+</html>

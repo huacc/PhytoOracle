@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhytoOracle - 知识管理</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: #fff;
+            border-bottom: 1px solid #e8e8e8;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 500;
+            color: #1890ff;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            background: #fff;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            color: #1890ff;
+            border-color: #1890ff;
+        }
+
+        .btn-primary {
+            background: #1890ff;
+            color: #fff;
+            border-color: #1890ff;
+        }
+
+        .btn-primary:hover {
+            background: #40a9ff;
+        }
+
+        .btn-success {
+            background: #52c41a;
+            color: #fff;
+            border-color: #52c41a;
+        }
+
+        .btn-success:hover {
+            background: #73d13d;
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            height: calc(100vh - 65px);
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .sidebar {
+            background: #fff;
+            border-right: 1px solid #e8e8e8;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #e8e8e8;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .tree-view {
+            padding: 12px 0;
+        }
+
+        .tree-node {
+            list-style: none;
+        }
+
+        .tree-item {
+            padding: 8px 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        .tree-item:hover {
+            background: #f5f5f5;
+        }
+
+        .tree-item.active {
+            background: #e6f7ff;
+            color: #1890ff;
+            border-left: 3px solid #1890ff;
+        }
+
+        .tree-icon {
+            font-size: 14px;
+            transition: transform 0.3s;
+        }
+
+        .tree-icon.expanded {
+            transform: rotate(90deg);
+        }
+
+        .tree-children {
+            padding-left: 24px;
+            display: none;
+        }
+
+        .tree-children.visible {
+            display: block;
+        }
+
+        .tree-section-title {
+            padding: 16px 20px 8px 20px;
+            font-size: 12px;
+            color: #8c8c8c;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .content-area {
+            background: #f5f5f5;
+            overflow-y: auto;
+        }
+
+        .toolbar {
+            background: #fff;
+            padding: 16px 24px;
+            border-bottom: 1px solid #e8e8e8;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .toolbar-left {
+            display: flex;
+            gap: 12px;
+        }
+
+        .toolbar-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .content-body {
+            padding: 24px;
+        }
+
+        .dimension-card {
+            background: #fff;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 16px 20px;
+            background: #fafafa;
+            border-bottom: 1px solid #e8e8e8;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.3s;
+        }
+
+        .card-header:hover {
+            background: #f0f0f0;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .ontology-badge {
+            display: inline-block;
+            background: #e6f7ff;
+            color: #1890ff;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 400;
+            border: 1px solid #91d5ff;
+        }
+
+        .card-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .weight-badge {
+            background: #e6f7ff;
+            color: #1890ff;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .collapse-icon {
+            transition: transform 0.3s;
+            color: #999;
+        }
+
+        .dimension-card.collapsed .collapse-icon {
+            transform: rotate(-90deg);
+        }
+
+        .card-body {
+            padding: 20px;
+            display: block;
+        }
+
+        .dimension-card.collapsed .card-body {
+            display: none;
+        }
+
+        .field-group {
+            margin-bottom: 20px;
+        }
+
+        .field-label {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .field-value {
+            padding: 10px 12px;
+            background: #fafafa;
+            border: 1px solid #e8e8e8;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #333;
+            width: 100%;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+
+        .field-value:focus {
+            outline: none;
+            border-color: #1890ff;
+            background: #fff;
+        }
+
+        .vlm-descriptions {
+            margin-top: 20px;
+            padding: 16px;
+            background: #f9f9f9;
+            border-radius: 4px;
+            border-left: 3px solid #1890ff;
+        }
+
+        .vlm-title {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 12px;
+            font-size: 15px;
+        }
+
+        .vlm-section {
+            margin-bottom: 16px;
+        }
+
+        .vlm-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .vlm-subtitle {
+            font-size: 13px;
+            color: #8c8c8c;
+            margin-bottom: 6px;
+        }
+
+        .vlm-content {
+            font-size: 14px;
+            color: #333;
+            line-height: 1.8;
+            padding: 8px 0;
+        }
+
+        .vlm-textarea {
+            width: 100%;
+            min-height: 80px;
+            padding: 10px 12px;
+            border: 1px solid #e8e8e8;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+        }
+
+        .vlm-textarea:focus {
+            outline: none;
+            border-color: #1890ff;
+        }
+
+        .treatment-section {
+            background: #fff;
+            border-radius: 8px;
+            padding: 24px;
+            margin-top: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            cursor: pointer;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .treatment-content {
+            padding: 16px;
+            background: #fafafa;
+            border-radius: 4px;
+        }
+
+        .treatment-section.collapsed .treatment-content {
+            display: none;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #fff;
+            border-radius: 8px;
+            padding: 24px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 16px;
+        }
+
+        .modal-body {
+            margin-bottom: 24px;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .version-list {
+            list-style: none;
+        }
+
+        .version-item {
+            padding: 12px;
+            border: 1px solid #e8e8e8;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .version-item:hover {
+            background: #f5f5f5;
+            border-color: #1890ff;
+        }
+
+        .version-name {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .version-meta {
+            font-size: 12px;
+            color: #8c8c8c;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>PhytoOracle - 知识管理</h1>
+        <button class="btn" onclick="goBack()">返回首页</button>
+    </div>
+
+    <div class="main-layout">
+        <!-- 左侧目录树 -->
+        <div class="sidebar">
+            <div class="sidebar-header">知识库目录</div>
+            <ul class="tree-view">
+                <li class="tree-node">
+                    <div class="tree-item" onclick="toggleTreeNode(this)">
+                        <span class="tree-icon expanded">▶</span>
+                        <span>🌹 Rosa (蔷薇属)</span>
+                    </div>
+                    <ul class="tree-children visible">
+                        <li class="tree-item active" onclick="selectDisease('rose_black_spot')">玫瑰黑斑病</li>
+                        <li class="tree-item" onclick="selectDisease('rose_powdery_mildew')">玫瑰白粉病</li>
+                        <li class="tree-item" onclick="selectDisease('rose_rust')">玫瑰锈病</li>
+                    </ul>
+                </li>
+
+                <li class="tree-node">
+                    <div class="tree-item" onclick="toggleTreeNode(this)">
+                        <span class="tree-icon expanded">▶</span>
+                        <span>🌸 Prunus (李属)</span>
+                    </div>
+                    <ul class="tree-children visible">
+                        <li class="tree-item" onclick="selectDisease('cherry_powdery_mildew')">樱花白粉病</li>
+                        <li class="tree-item" onclick="selectDisease('cherry_leaf_spot')">樱花叶斑病</li>
+                    </ul>
+                </li>
+
+                <li class="tree-node">
+                    <div class="tree-item" onclick="toggleTreeNode(this)">
+                        <span class="tree-icon">▶</span>
+                        <span>🌷 Tulipa (郁金香属)</span>
+                    </div>
+                    <ul class="tree-children">
+                        <li class="tree-item" onclick="selectDisease('tulip_gray_mold')">郁金香灰霉病</li>
+                        <li class="tree-item" onclick="selectDisease('tulip_fire')">郁金香火疫病</li>
+                    </ul>
+                </li>
+
+                <li class="tree-section-title">━━━━━ 其他 ━━━━━</li>
+
+                <li class="tree-node">
+                    <div class="tree-item" onclick="alert('特征本体请在【本体结构管理】中查看')">
+                        <span>🎯 特征本体</span>
+                    </div>
+                </li>
+
+                <li class="tree-node">
+                    <div class="tree-item" onclick="alert('宿主关联请在【本体结构管理】中查看')">
+                        <span>🔗 宿主关联</span>
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <!-- 右侧内容区 -->
+        <div class="content-area">
+            <div class="toolbar">
+                <div class="toolbar-title" id="diseaseTitle">玫瑰黑斑病 (Rose Black Spot)</div>
+                <div class="toolbar-left">
+                    <button class="btn btn-success" onclick="saveChanges()">💾 保存修改</button>
+                    <button class="btn" onclick="createSnapshot()">📸 保存快照</button>
+                    <button class="btn" onclick="showVersionHistory()">📋 版本历史</button>
+                    <button class="btn" onclick="exportKnowledge()">📤 导出</button>
+                </div>
+            </div>
+
+            <div class="content-body">
+                <!-- 基本信息 -->
+                <div class="dimension-card">
+                    <div class="card-header" onclick="toggleCard(this)">
+                        <div class="card-title">
+                            📝 基本信息
+                            <span class="ontology-badge">疾病本体</span>
+                        </div>
+                        <div class="card-meta">
+                            <span class="collapse-icon">▼</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="field-group">
+                            <div class="field-label">疾病ID</div>
+                            <input type="text" class="field-value" value="rose_black_spot" disabled>
+                        </div>
+                        <div class="field-group">
+                            <div class="field-label">中文名称</div>
+                            <input type="text" class="field-value" value="玫瑰黑斑病">
+                        </div>
+                        <div class="field-group">
+                            <div class="field-label">英文名称</div>
+                            <input type="text" class="field-value" value="Rose Black Spot">
+                        </div>
+                        <div class="field-group">
+                            <div class="field-label">病原体</div>
+                            <input type="text" class="field-value" value="Diplocarpon rosae (真菌)">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 维度1: 症状类型 -->
+                <div class="dimension-card">
+                    <div class="card-header" onclick="toggleCard(this)">
+                        <div class="card-title">
+                            🎯 维度1: 症状类型 (symptom_type)
+                            <span class="ontology-badge">特征本体</span>
+                        </div>
+                        <div class="card-meta">
+                            <span class="weight-badge">权重: 50%</span>
+                            <span class="collapse-icon">▼</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="field-group">
+                            <div class="field-label">标准值</div>
+                            <input type="text" class="field-value" value="necrosis_spot">
+                        </div>
+                        <div class="field-group">
+                            <div class="field-label">术语</div>
+                            <input type="text" class="field-value" value="坏死斑点">
+                        </div>
+
+                        <div class="vlm-descriptions">
+                            <div class="vlm-title">🤖 VLM 可理解的描述</div>
+
+                            <div class="vlm-section">
+                                <div class="vlm-subtitle">💊 影像学描述（医学/病理学术语）</div>
+                                <textarea class="vlm-textarea">叶片组织坏死形成的黑色或深褐色斑点，边界清晰，中心区域细胞完全死亡，周围有黄色晕圈。斑点表面可能有细微裂纹或凹陷。</textarea>
+                            </div>
+
+                            <div class="vlm-section">
+                                <div class="vlm-subtitle">💬 日常用语（视觉比喻和类比）</div>
+                                <textarea class="vlm-textarea">• 像被香烟烫过留下的焦痕，中间黑色，周围发黄
+• 类似纸张被火星烧出的小洞边缘
+• 好比墨汁滴在绿色布料上，形成深色斑块
+• 仿佛叶子被腐蚀剂点到，出现黑色坑洞</textarea>
+                            </div>
+
+                            <div class="vlm-section">
+                                <div class="vlm-subtitle">📍 空间定位方法</div>
+                                <textarea class="vlm-textarea">病斑通常散布在叶片主体区域，优先观察叶片正面，病斑直径通常2-12mm，多个斑点可能分布在同一叶片的不同位置。</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 维度2: 中心颜色 -->
+                <div class="dimension-card">
+                    <div class="card-header" onclick="toggleCard(this)">
+                        <div class="card-title">
+                            🎨 维度2: 中心颜色 (color_center)
+                            <span class="ontology-badge">特征本体</span>
+                        </div>
+                        <div class="card-meta">
+                            <span class="weight-badge">权重: 10%</span>
+                            <span class="collapse-icon">▼</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="field-group">
+                            <div class="field-label">标准值</div>
+                            <input type="text" class="field-value" value="black">
+                        </div>
+                        <div class="field-group">
+                            <div class="field-label">术语</div>
+                            <input type="text" class="field-value" value="黑色">
+                        </div>
+
+                        <div class="vlm-descriptions">
+                            <div class="vlm-title">🤖 VLM 可理解的描述</div>
+
+                            <div class="vlm-section">
+                                <div class="vlm-subtitle">💊 影像学描述</div>
+                                <textarea class="vlm-textarea">病斑中心呈深黑色至黑褐色，颜色均匀，表面可能略显光泽或干燥，与周围健康组织形成鲜明对比。</textarea>
+                            </div>
+
+                            <div class="vlm-section">
+                                <div class="vlm-subtitle">💬 日常用语</div>
+                                <textarea class="vlm-textarea">• 像黑色墨水渍的中心部分
+• 类似烧焦的纸张中心，呈炭黑色
+• 好比深色印章的墨迹，浓黑而清晰</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 维度3: 边缘颜色 -->
+                <div class="dimension-card">
+                    <div class="card-header" onclick="toggleCard(this)">
+                        <div class="card-title">
+                            🔵 维度3: 边缘颜色 (color_border)
+                            <span class="ontology-badge">特征本体</span>
+                        </div>
+                        <div class="card-meta">
+                            <span class="weight-badge">权重: 30%</span>
+                            <span class="collapse-icon">▼</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="field-group">
+                            <div class="field-label">标准值</div>
+                            <input type="text" class="field-value" value="halo_yellow">
+                        </div>
+                        <div class="field-group">
+                            <div class="field-label">术语</div>
+                            <input type="text" class="field-value" value="黄色晕圈">
+                        </div>
+
+                        <div class="vlm-descriptions">
+                            <div class="vlm-title">🤖 VLM 可理解的描述</div>
+
+                            <div class="vlm-section">
+                                <div class="vlm-subtitle">💊 影像学描述</div>
+                                <textarea class="vlm-textarea">病斑周围有明显的黄色晕圈，宽度约1-3mm，颜色从中心向外逐渐过渡，从黑色到黄色再到正常绿色。晕圈边界相对模糊。</textarea>
+                            </div>
+
+                            <div class="vlm-section">
+                                <div class="vlm-subtitle">💬 日常用语</div>
+                                <textarea class="vlm-textarea">• 像太阳的光晕，中心暗，周围泛黄光
+• 类似水彩画中颜料扩散的边缘效果
+• 好比油渍在纸上扩散形成的黄色圈
+• 仿佛黑色斑点被金黄色光环围绕</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 维度4: 发病位置 -->
+                <div class="dimension-card collapsed">
+                    <div class="card-header" onclick="toggleCard(this)">
+                        <div class="card-title">
+                            📍 维度4: 发病位置 (location)
+                            <span class="ontology-badge">特征本体</span>
+                        </div>
+                        <div class="card-meta">
+                            <span class="weight-badge">权重: 5%</span>
+                            <span class="collapse-icon">▼</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="field-group">
+                            <div class="field-label">标准值</div>
+                            <input type="text" class="field-value" value="lamina">
+                        </div>
+                        <div class="field-group">
+                            <div class="field-label">术语</div>
+                            <input type="text" class="field-value" value="叶片主体">
+                        </div>
+
+                        <div class="vlm-descriptions">
+                            <div class="vlm-title">🤖 VLM 可理解的描述</div>
+
+                            <div class="vlm-section">
+                                <div class="vlm-subtitle">💊 影像学描述</div>
+                                <textarea class="vlm-textarea">病斑主要出现在叶片的叶身区域（非叶尖、叶缘或叶柄），分布在叶脉之间的组织上。</textarea>
+                            </div>
+
+                            <div class="vlm-section">
+                                <div class="vlm-subtitle">💬 日常用语</div>
+                                <textarea class="vlm-textarea">• 病斑长在叶子的"肚子"上，不在边边角角
+• 出现在叶片的主要部分，远离叶子边缘
+• 位于叶子中间区域，不在叶尖或叶梗</textarea>
+                            </div>
+
+                            <div class="vlm-section">
+                                <div class="vlm-subtitle">📍 空间定位方法</div>
+                                <textarea class="vlm-textarea">排除叶尖（最前端1/5区域）、叶缘（边缘2mm以内）、叶柄（连接茎的部分）后，剩余的叶片中央和两侧主要区域。</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 其他次要维度（折叠状态） -->
+                <div class="dimension-card collapsed">
+                    <div class="card-header" onclick="toggleCard(this)">
+                        <div class="card-title">
+                            📏 维度5: 斑点大小 (size)
+                            <span class="ontology-badge">特征本体</span>
+                        </div>
+                        <div class="card-meta">
+                            <span class="weight-badge">权重: 2%</span>
+                            <span class="collapse-icon">▼</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="field-group">
+                            <div class="field-label">标准值</div>
+                            <input type="text" class="field-value" value="medium">
+                        </div>
+                        <div class="field-group">
+                            <div class="field-label">术语</div>
+                            <input type="text" class="field-value" value="中等 (3-8mm)">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dimension-card collapsed">
+                    <div class="card-header" onclick="toggleCard(this)">
+                        <div class="card-title">
+                            🗺️ 维度6: 分布模式 (distribution)
+                            <span class="ontology-badge">特征本体</span>
+                        </div>
+                        <div class="card-meta">
+                            <span class="weight-badge">权重: 2%</span>
+                            <span class="collapse-icon">▼</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="field-group">
+                            <div class="field-label">标准值</div>
+                            <input type="text" class="field-value" value="scattered">
+                        </div>
+                        <div class="field-group">
+                            <div class="field-label">术语</div>
+                            <input type="text" class="field-value" value="散点分布">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 治疗知识 -->
+                <div class="treatment-section">
+                    <div class="section-header" onclick="toggleTreatment(this)">
+                        <div class="section-title">
+                            💊 治疗知识（预留接口）
+                            <span class="ontology-badge">治疗本体</span>
+                        </div>
+                        <span class="collapse-icon">▼</span>
+                    </div>
+                    <div class="treatment-content">
+                        <div class="field-group">
+                            <div class="field-label">化学防治</div>
+                            <textarea class="vlm-textarea">• 发病初期喷洒75%百菌清可湿性粉剂600-800倍液
+• 或使用70%代森锰锌可湿性粉剂500倍液
+• 每7-10天喷一次，连续喷2-3次</textarea>
+                        </div>
+                        <div class="field-group">
+                            <div class="field-label">农业防治</div>
+                            <textarea class="vlm-textarea">• 及时清除病叶和落叶，减少侵染源
+• 加强通风透光，降低叶面湿度
+• 避免偏施氮肥，增施磷钾肥提高抗性</textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 版本历史模态框 -->
+    <div class="modal" id="versionModal">
+        <div class="modal-content">
+            <div class="modal-header">📋 版本历史</div>
+            <div class="modal-body">
+                <ul class="version-list">
+                    <li class="version-item" onclick="loadVersion('v1.3')">
+                        <div class="version-name">v1.3 - 当前版本</div>
+                        <div class="version-meta">2025-11-14 10:30 | 更新VLM描述</div>
+                    </li>
+                    <li class="version-item" onclick="loadVersion('v1.2')">
+                        <div class="version-name">v1.2 - 快照_20251113</div>
+                        <div class="version-meta">2025-11-13 15:20 | 调整权重配置</div>
+                    </li>
+                    <li class="version-item" onclick="loadVersion('v1.1')">
+                        <div class="version-name">v1.1 - 快照_20251110</div>
+                        <div class="version-meta">2025-11-10 09:15 | 初始化知识库</div>
+                    </li>
+                    <li class="version-item" onclick="loadVersion('v1.0')">
+                        <div class="version-name">v1.0 - 基础版本</div>
+                        <div class="version-meta">2025-11-01 14:00 | 创建疾病条目</div>
+                    </li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeModal('versionModal')">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 保存成功模态框 -->
+    <div class="modal" id="successModal">
+        <div class="modal-content">
+            <div class="modal-header">✓ 保存成功</div>
+            <div class="modal-body">
+                <p>知识已成功保存并验证通过！</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="closeModal('successModal')">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleTreeNode(element) {
+            const icon = element.querySelector('.tree-icon');
+            const children = element.nextElementSibling;
+
+            if (icon && children) {
+                icon.classList.toggle('expanded');
+                children.classList.toggle('visible');
+            }
+        }
+
+        function selectDisease(diseaseId) {
+            // 更新选中状态
+            const items = document.querySelectorAll('.tree-item');
+            items.forEach(item => item.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+
+            // 模拟加载不同疾病数据
+            const diseaseNames = {
+                'rose_black_spot': '玫瑰黑斑病 (Rose Black Spot)',
+                'rose_powdery_mildew': '玫瑰白粉病 (Rose Powdery Mildew)',
+                'rose_rust': '玫瑰锈病 (Rose Rust)',
+                'cherry_powdery_mildew': '樱花白粉病 (Cherry Powdery Mildew)',
+                'cherry_leaf_spot': '樱花叶斑病 (Cherry Leaf Spot)',
+                'tulip_gray_mold': '郁金香灰霉病 (Tulip Gray Mold)',
+                'tulip_fire': '郁金香火疫病 (Tulip Fire)'
+            };
+
+            document.getElementById('diseaseTitle').textContent = diseaseNames[diseaseId] || diseaseId;
+
+            console.log('已选择疾病:', diseaseId);
+        }
+
+        function toggleCard(element) {
+            const card = element.closest('.dimension-card') || element.closest('.treatment-section');
+            card.classList.toggle('collapsed');
+        }
+
+        function toggleTreatment(element) {
+            const section = element.closest('.treatment-section');
+            section.classList.toggle('collapsed');
+        }
+
+        function saveChanges() {
+            // 模拟保存过程
+            console.log('正在保存知识修改...');
+
+            // 收集所有输入值
+            const inputs = document.querySelectorAll('.field-value, .vlm-textarea');
+            const data = {};
+            inputs.forEach(input => {
+                if (!input.disabled) {
+                    console.log('字段值:', input.value);
+                }
+            });
+
+            // 显示成功提示
+            setTimeout(() => {
+                document.getElementById('successModal').classList.add('active');
+            }, 300);
+        }
+
+        function createSnapshot() {
+            const timestamp = new Date().toISOString().slice(0, 19).replace('T', '_');
+            const snapshotName = `快照_${timestamp}.zip`;
+
+            if (confirm(`确定要创建快照吗？\n\n快照名称: ${snapshotName}\n包含: 当前所有疾病知识的完整数据`)) {
+                console.log('创建快照:', snapshotName);
+                alert(`快照创建成功！\n\n文件: ${snapshotName}\n位置: /snapshots/`);
+            }
+        }
+
+        function showVersionHistory() {
+            document.getElementById('versionModal').classList.add('active');
+        }
+
+        function loadVersion(version) {
+            if (confirm(`确定要恢复到版本 ${version} 吗？\n\n当前未保存的修改将丢失。`)) {
+                console.log('恢复版本:', version);
+                closeModal('versionModal');
+                alert(`已恢复到版本 ${version}`);
+            }
+        }
+
+        function exportKnowledge() {
+            const options = [
+                'JSON格式 (完整数据)',
+                'Excel格式 (表格视图)',
+                'Markdown格式 (文档)'
+            ];
+
+            const choice = prompt(`请选择导出格式：\n\n1. ${options[0]}\n2. ${options[1]}\n3. ${options[2]}\n\n请输入数字 1-3:`);
+
+            if (choice) {
+                const format = options[parseInt(choice) - 1] || options[0];
+                console.log('导出格式:', format);
+                alert(`正在导出: ${format}\n\n文件将保存到下载目录。`);
+            }
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        function goBack() {
+            if (confirm('确定要返回首页吗？未保存的修改将丢失。')) {
+                alert('返回首页');
+            }
+        }
+
+        // 点击模态框背景关闭
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.classList.remove('active');
+            }
+        }
+    </script>
+</body>
+</html>

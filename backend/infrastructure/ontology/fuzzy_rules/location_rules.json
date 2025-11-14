@@ -1,0 +1,60 @@
+{
+  "version": "1.0",
+  "description": "位置模糊匹配规则配置（P2.4新增）",
+  "last_updated": "2025-11-12",
+
+  "_comment_location_groups": "位置组，组内位置具有解剖学相关性",
+  "location_groups": {
+    "leaf_surface": {
+      "description": "叶片表面区域",
+      "members": ["lamina", "vein"],
+      "notes": "叶片正面的不同解剖结构，病变可能从一处扩散到另一处"
+    },
+    "leaf_periphery": {
+      "description": "叶片外围区域",
+      "members": ["margin", "petiole"],
+      "notes": "叶片边缘和叶柄，常是病原体侵入点"
+    },
+    "leaf_any": {
+      "description": "叶片任意位置（最宽泛）",
+      "members": ["lamina", "vein", "margin", "petiole"],
+      "notes": "所有叶片相关位置"
+    }
+  },
+
+  "_comment_adjacent_locations": "相邻位置映射，用于判断位置之间的近似性",
+  "adjacent_locations": {
+    "lamina": ["vein", "margin"],
+    "vein": ["lamina"],
+    "margin": ["lamina", "petiole"],
+    "petiole": ["margin"]
+  },
+
+  "_comment_similarity_scores": "不同匹配类型的相似度分数",
+  "similarity_scores": {
+    "exact_match": 1.0,
+    "same_group_match": 0.7,
+    "adjacent_match": 0.6
+  },
+
+  "_comment_notes": [
+    "精确匹配：位置完全相同（分数1.0）",
+    "同组匹配：属于同一location_group（如lamina和vein都属于leaf_surface，分数0.7）",
+    "相邻匹配：通过adjacent_locations映射（如lamina和margin，分数0.6）",
+    "位置模糊匹配的容差较低，因为位置是疾病诊断的重要特征"
+  ],
+
+  "_comment_examples": [
+    "lamina 匹配 vein: True (同属leaf_surface组)",
+    "margin 匹配 petiole: True (同属leaf_periphery组)",
+    "lamina 匹配 petiole: False (不同组且不相邻)"
+  ],
+
+  "_comment_rationale": [
+    "为什么需要位置模糊匹配？",
+    "1. VLM可能将叶脉上的病变误判为叶肉上的病变",
+    "2. 某些疾病会从叶缘扩散到叶肉",
+    "3. 病变早期可能局限于某个位置，晚期可能扩散到相邻位置",
+    "4. 提高诊断的鲁棒性，避免因位置识别误差而漏诊"
+  ]
+}

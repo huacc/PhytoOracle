@@ -1,0 +1,38 @@
+{
+  "version": "1.0",
+  "description": "尺寸模糊匹配规则配置",
+  "last_updated": "2025-11-12",
+
+  "_comment_order": "尺寸大小顺序（从小到大），用于判断相邻级别",
+  "order": [
+    "pinpoint",
+    "small",
+    "medium_small",
+    "medium",
+    "medium_large",
+    "large"
+  ],
+
+  "_comment_tolerance": "允许的容差范围（相邻级别数量）",
+  "tolerance": 1,
+
+  "_comment_similarity_scores": "不同容差级别的相似度分数",
+  "similarity_scores": {
+    "exact_match": 1.0,
+    "tolerance_1": 0.8,
+    "tolerance_2": 0.6
+  },
+
+  "_comment_notes": [
+    "精确匹配：尺寸值完全相同（分数1.0）",
+    "容差1级匹配：相邻1个级别（如medium和medium_small，分数0.8）",
+    "容差2级匹配：相邻2个级别（如medium和small，分数0.6）",
+    "当前配置tolerance=1，只允许相邻1个级别的模糊匹配"
+  ],
+
+  "_comment_examples": [
+    "medium 匹配 medium_small: True (相差1级)",
+    "medium 匹配 small: False (相差2级，超过tolerance)",
+    "large 匹配 medium_large: True (相差1级)"
+  ]
+}

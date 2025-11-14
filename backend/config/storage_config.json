@@ -1,0 +1,14 @@
+{
+  "base_path": "storage/images",
+  "max_file_size": 10485760,
+  "allowed_extensions": [
+    ".jpg",
+    ".jpeg",
+    ".png"
+  ],
+  "create_thumbnails": false,
+  "thumbnail_size": [
+    200,
+    200
+  ]
+}

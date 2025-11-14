@@ -1,0 +1,37 @@
+{
+  "version": "1.0",
+  "description": "特征重要性权重配置（三层渐进诊断逻辑）",
+  "last_updated": "2025-11-13",
+  "weights": {
+    "major": 0.80,
+    "minor": 0.15,
+    "optional": 0.05
+  },
+  "thresholds": {
+    "confirmed_score": 0.85,
+    "confirmed_major_ratio": 1.0,
+    "suspected_score": 0.60,
+    "suspected_major_ratio": 0.5
+  },
+  "notes": {
+    "major": "主要特征权重（医学诊断的核心，如症状类型+颜色）",
+    "minor": "次要特征权重（辅助诊断，如位置+尺寸）",
+    "optional": "可选特征权重（补充信息，如分布模式）",
+    "confirmed_score": "确诊阈值：≥0.85",
+    "confirmed_major_ratio": "确诊的主要特征匹配比例：≥1.0（即2/2）",
+    "suspected_score": "疑似阈值：≥0.60",
+    "suspected_major_ratio": "疑似的主要特征匹配比例：≥0.5（即1/2）"
+  },
+  "diagnosis_rules": {
+    "confirmed": "total_score ≥ 0.85 且 major_matched/major_total ≥ 1.0",
+    "suspected": "0.60 ≤ total_score < 0.85 且 major_matched/major_total ≥ 0.5",
+    "unlikely": "total_score < 0.60 或 major_matched/major_total < 0.5"
+  },
+  "changelog": [
+    {
+      "version": "1.0",
+      "date": "2025-11-13",
+      "changes": "初始版本，遵循需求文档v1.3的三层渐进诊断逻辑"
+    }
+  ]
+}

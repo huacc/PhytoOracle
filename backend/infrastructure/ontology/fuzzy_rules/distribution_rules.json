@@ -1,0 +1,72 @@
+{
+  "version": "1.0",
+  "description": "分布模式模糊匹配规则配置（P2.4新增）",
+  "last_updated": "2025-11-12",
+
+  "_comment_distribution_groups": "分布模式组，组内模式具有相似的空间特征",
+  "distribution_groups": {
+    "dispersed": {
+      "description": "分散分布（病斑相互独立）",
+      "members": ["scattered", "random"],
+      "notes": "病斑零散分布，不聚集"
+    },
+    "aggregated": {
+      "description": "聚集分布（病斑成团）",
+      "members": ["clustered", "confluent"],
+      "notes": "病斑聚集在一起，可能融合"
+    },
+    "patterned": {
+      "description": "特定模式分布",
+      "members": ["along_vein"],
+      "notes": "沿特定解剖结构（如叶脉）分布"
+    }
+  },
+
+  "_comment_similar_patterns": "相似分布模式映射",
+  "similar_patterns": {
+    "scattered": ["random"],
+    "random": ["scattered"],
+    "clustered": ["confluent"],
+    "confluent": ["clustered"],
+    "along_vein": []
+  },
+
+  "_comment_progression_patterns": "疾病进展模式（早期→晚期）",
+  "progression_patterns": {
+    "scattered_to_confluent": {
+      "description": "从散点分布发展到融合",
+      "stages": ["scattered", "random", "clustered", "confluent"],
+      "notes": "许多真菌病害的典型进展模式"
+    }
+  },
+
+  "_comment_similarity_scores": "不同匹配类型的相似度分数",
+  "similarity_scores": {
+    "exact_match": 1.0,
+    "same_group_match": 0.8,
+    "similar_pattern_match": 0.75,
+    "progression_adjacent_match": 0.6
+  },
+
+  "_comment_notes": [
+    "精确匹配：分布模式完全相同（分数1.0）",
+    "同组匹配：属于同一distribution_group（如scattered和random，分数0.8）",
+    "相似模式匹配：通过similar_patterns映射（如clustered和confluent，分数0.75）",
+    "进展相邻匹配：在progression_patterns中相邻（如scattered→clustered，分数0.6）"
+  ],
+
+  "_comment_examples": [
+    "scattered 匹配 random: True (同属dispersed组，分数0.8)",
+    "clustered 匹配 confluent: True (同属aggregated组，分数0.8)",
+    "scattered 匹配 clustered: 可能匹配 (进展相邻，分数0.6)",
+    "along_vein 匹配 scattered: False (不同组且无相似性)"
+  ],
+
+  "_comment_rationale": [
+    "为什么需要分布模式模糊匹配？",
+    "1. VLM可能对'散点'和'随机'分布的区分不明确",
+    "2. 疾病发展的不同阶段分布模式会变化（如早期散点→晚期融合）",
+    "3. 不同观察角度/拍摄距离可能导致分布模式识别差异",
+    "4. 提高诊断的鲁棒性，避免因分布模式识别误差而影响诊断"
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "version": "1.0",
+  "description": "完整性修正系数配置",
+  "last_updated": "2025-11-13",
+  "coefficients": {
+    "complete": 1.0,
+    "partial": 0.8,
+    "close_up": 0.6
+  },
+  "notes": {
+    "complete": "完整器官：无修正（系数1.0）",
+    "partial": "部分器官：轻度降权（系数0.8），因信息不完整",
+    "close_up": "特写镜头：中度降权（系数0.6），因缺乏全局信息"
+  },
+  "rationale": {
+    "complete": "完整的器官图片可见全部特征，诊断准确度最高",
+    "partial": "部分遮挡的器官可能隐藏关键特征，降低诊断信心",
+    "close_up": "特写镜头缺乏分布模式等全局特征，降低诊断信心更多"
+  },
+  "changelog": [
+    {
+      "version": "1.0",
+      "date": "2025-11-13",
+      "changes": "初始版本，根据研发计划v1.0定义"
+    }
+  ]
+}

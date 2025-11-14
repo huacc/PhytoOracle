@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhytoOracle - 单图诊断</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: #fff;
+            border-bottom: 1px solid #e8e8e8;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 500;
+            color: #1890ff;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            background: #fff;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            color: #1890ff;
+            border-color: #1890ff;
+        }
+
+        .btn-primary {
+            background: #1890ff;
+            color: #fff;
+            border-color: #1890ff;
+        }
+
+        .btn-primary:hover {
+            background: #40a9ff;
+            border-color: #40a9ff;
+        }
+
+        .btn-success {
+            background: #52c41a;
+            color: #fff;
+            border-color: #52c41a;
+        }
+
+        .btn-success:hover {
+            background: #73d13d;
+        }
+
+        .btn-danger {
+            background: #ff4d4f;
+            color: #fff;
+            border-color: #ff4d4f;
+        }
+
+        .btn-danger:hover {
+            background: #ff7875;
+        }
+
+        .btn-large {
+            padding: 12px 32px;
+            font-size: 16px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 24px auto;
+            padding: 0 24px;
+        }
+
+        /* 上传区域 */
+        .upload-section {
+            background: #fff;
+            border-radius: 8px;
+            padding: 60px 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .upload-section.hidden {
+            display: none;
+        }
+
+        .upload-area {
+            border: 2px dashed #d9d9d9;
+            border-radius: 8px;
+            padding: 80px 24px;
+            background: #fafafa;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 24px;
+        }
+
+        .upload-area:hover {
+            border-color: #1890ff;
+            background: #e6f7ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #1890ff;
+            background: #e6f7ff;
+        }
+
+        .upload-icon {
+            font-size: 64px;
+            color: #1890ff;
+            margin-bottom: 16px;
+        }
+
+        .upload-text {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .upload-hint {
+            font-size: 14px;
+            color: #999;
+        }
+
+        /* 预览和检测区域 */
+        .preview-section {
+            background: #fff;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .preview-section.active {
+            display: block;
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .preview-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .preview-content {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 500px;
+            border: 1px solid #e8e8e8;
+            border-radius: 8px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        /* 诊断结果区域 */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+            display: none;
+        }
+
+        .main-content.active {
+            display: grid;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .image-container {
+            text-align: center;
+        }
+
+        .image-preview {
+            max-width: 100%;
+            max-height: 500px;
+            border: 1px solid #e8e8e8;
+            border-radius: 8px;
+        }
+
+        .result-card h2 {
+            font-size: 18px;
+            margin-bottom: 16px;
+            color: #333;
+        }
+
+        .diagnosis-result {
+            margin-bottom: 24px;
+        }
+
+        .disease-name {
+            font-size: 24px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .confidence {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .confidence.high {
+            background: #f6ffed;
+            color: #52c41a;
+            border: 1px solid #b7eb8f;
+        }
+
+        .confidence.medium {
+            background: #fff7e6;
+            color: #fa8c16;
+            border: 1px solid #ffd591;
+        }
+
+        .pathogen {
+            color: #8c8c8c;
+            font-size: 14px;
+            margin-top: 8px;
+        }
+
+        .reasoning-section {
+            margin-top: 16px;
+        }
+
+        .reasoning-title {
+            font-weight: 500;
+            margin-bottom: 12px;
+            color: #333;
+        }
+
+        .feature-list {
+            list-style: none;
+        }
+
+        .feature-item {
+            padding: 8px 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .feature-item::before {
+            content: '✓';
+            color: #52c41a;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .detail-section {
+            background: #fff;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 24px;
+        }
+
+        .collapsible {
+            border: 1px solid #e8e8e8;
+            border-radius: 4px;
+            margin-bottom: 16px;
+        }
+
+        .collapsible-header {
+            padding: 12px 16px;
+            background: #fafafa;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.3s;
+        }
+
+        .collapsible-header:hover {
+            background: #f0f0f0;
+        }
+
+        .collapsible-header h3 {
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .collapsible-content {
+            padding: 16px;
+            display: none;
+        }
+
+        .collapsible.active .collapsible-content {
+            display: block;
+        }
+
+        .collapsible-icon {
+            transition: transform 0.3s;
+        }
+
+        .collapsible.active .collapsible-icon {
+            transform: rotate(180deg);
+        }
+
+        .qa-table {
+            width: 100%;
+        }
+
+        .qa-row {
+            display: grid;
+            grid-template-columns: 200px 1fr 80px 60px;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+            align-items: center;
+        }
+
+        .qa-row:last-child {
+            border-bottom: none;
+        }
+
+        .qa-label {
+            color: #8c8c8c;
+            font-size: 14px;
+        }
+
+        .qa-value {
+            color: #333;
+            font-size: 14px;
+        }
+
+        .qa-status {
+            text-align: right;
+        }
+
+        .status-pass {
+            color: #52c41a;
+        }
+
+        .btn-small {
+            padding: 4px 8px;
+            font-size: 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            background: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-small:hover {
+            color: #1890ff;
+            border-color: #1890ff;
+        }
+
+        .qa-detail {
+            grid-column: 1 / -1;
+            display: none;
+            margin-top: 12px;
+            padding: 16px;
+            background: #f9f9f9;
+            border-radius: 4px;
+            border-left: 3px solid #1890ff;
+        }
+
+        .qa-row.expanded .qa-detail {
+            display: block;
+        }
+
+        .qa-detail-section {
+            margin-bottom: 16px;
+        }
+
+        .qa-detail-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .qa-detail-title {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .qa-detail-content {
+            color: #666;
+            font-size: 13px;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            background: #fff;
+            padding: 12px;
+            border-radius: 4px;
+            border: 1px solid #e8e8e8;
+        }
+
+        .expand-arrow {
+            transition: transform 0.3s;
+            display: inline-block;
+        }
+
+        .qa-row.expanded .expand-arrow {
+            transform: rotate(180deg);
+        }
+
+        .feature-match {
+            margin-bottom: 24px;
+        }
+
+        .score-display {
+            font-size: 32px;
+            font-weight: 600;
+            color: #52c41a;
+            text-align: center;
+            margin: 16px 0;
+        }
+
+        .feature-group {
+            margin-bottom: 20px;
+        }
+
+        .feature-group-title {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 12px;
+            font-size: 15px;
+        }
+
+        .feature-detail {
+            padding: 12px;
+            background: #fafafa;
+            border-left: 3px solid #52c41a;
+            margin-bottom: 8px;
+            border-radius: 4px;
+        }
+
+        .feature-detail.partial {
+            border-left-color: #fa8c16;
+        }
+
+        .feature-name {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .feature-score {
+            color: #52c41a;
+            font-weight: 500;
+        }
+
+        .feedback-section {
+            background: #fff;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .feedback-section p {
+            margin-bottom: 16px;
+            color: #666;
+        }
+
+        .feedback-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #fff;
+            border-radius: 8px;
+            padding: 24px;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .modal-header {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 16px;
+        }
+
+        .modal-body {
+            margin-bottom: 24px;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>PhytoOracle - 单图诊断</h1>
+        <button class="btn" onclick="goBack()">返回首页</button>
+    </div>
+
+    <div class="container">
+        <!-- 步骤1: 上传图片 -->
+        <div class="upload-section" id="uploadSection">
+            <div class="upload-area" id="uploadArea"
+                 ondrop="handleDrop(event)"
+                 ondragover="handleDragOver(event)"
+                 ondragleave="handleDragLeave(event)"
+                 onclick="triggerFileInput()">
+                <div class="upload-icon">📤</div>
+                <div class="upload-text">拖拽图片到此处，或点击选择文件</div>
+                <div class="upload-hint">支持 JPG、PNG 格式图片</div>
+                <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
+            </div>
+        </div>
+
+        <!-- 步骤2: 预览和开始检测 -->
+        <div class="preview-section" id="previewSection">
+            <div class="preview-header">
+                <div class="preview-title">图片预览</div>
+                <button class="btn" onclick="reupload()">重新上传</button>
+            </div>
+            <div class="preview-content">
+                <img id="previewImage" class="preview-image" src="" alt="预览图片">
+            </div>
+            <div class="action-buttons">
+                <button class="btn btn-success btn-large" onclick="startDiagnosis()">🔍 开始检测</button>
+            </div>
+        </div>
+
+        <!-- 步骤3: 诊断结果 -->
+        <div class="main-content" id="resultSection">
+            <!-- 左侧：图片展示 -->
+            <div class="card image-container">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23e8f5e9' width='400' height='400'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='20' fill='%23666'%3E玫瑰叶片图片%3C/text%3E%3C/svg%3E"
+                     alt="诊断图片" class="image-preview" id="diagnosisImage">
+            </div>
+
+            <!-- 右侧：诊断结果 -->
+            <div class="card result-card">
+                <h2>诊断结果</h2>
+                <div class="diagnosis-result">
+                    <div class="disease-name">玫瑰黑斑病</div>
+                    <div class="confidence high">置信度：95%</div>
+                    <div class="pathogen">病原体：Diplocarpon rosae (真菌)</div>
+                </div>
+
+                <div class="reasoning-section">
+                    <div class="reasoning-title">推理依据：</div>
+                    <ul class="feature-list">
+                        <li class="feature-item">症状类型：坏死斑点</li>
+                        <li class="feature-item">中心颜色：黑色</li>
+                        <li class="feature-item">边缘颜色：黄色晕圈</li>
+                        <li class="feature-item">发病位置：叶片</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- VLM问答对详情 -->
+        <div class="detail-section">
+            <div class="collapsible" id="vlmSection">
+                <div class="collapsible-header" onclick="toggleCollapsible('vlmSection')">
+                    <h3>📋 VLM问答对详情</h3>
+                    <span class="collapsible-icon">▼</span>
+                </div>
+                <div class="collapsible-content">
+                    <div class="qa-table">
+                        <div class="qa-row">
+                            <div class="qa-label">Q0.0 图片内容</div>
+                            <div class="qa-value">花卉图片</div>
+                            <div class="qa-status status-pass">✓</div>
+                            <button class="btn-small" onclick="toggleQADetail(event, 'qa_0_0')">
+                                <span class="expand-arrow">▼</span>
+                            </button>
+                            <div class="qa-detail" id="qa_0_0">
+                                <div class="qa-detail-section">
+                                    <div class="qa-detail-title">📤 原始问题 (Prompt)</div>
+                                    <div class="qa-detail-content">请判断这张图片的内容类型。如果是花卉或植物图片，回答"花卉图片"；如果不是，回答"非花卉图片"。</div>
+                                </div>
+                                <div class="qa-detail-section">
+                                    <div class="qa-detail-title">📥 VLM原始回答</div>
+                                    <div class="qa-detail-content">花卉图片</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="qa-row">
+                            <div class="qa-label">Q0.1 图片类别</div>
+                            <div class="qa-value">叶部病害</div>
+                            <div class="qa-status status-pass">✓</div>
+                            <button class="btn-small" onclick="toggleQADetail(event, 'qa_0_1')">
+                                <span class="expand-arrow">▼</span>
+                            </button>
+                            <div class="qa-detail" id="qa_0_1">
+                                <div class="qa-detail-section">
+                                    <div class="qa-detail-title">📤 原始问题 (Prompt)</div>
+                                    <div class="qa-detail-content">这张花卉图片展示的是什么类型？请从以下选项中选择：
+- 叶部病害
+- 花部病害
+- 茎部病害
+- 根部病害
+- 果实病害
+- 健康植株
+
+只回答选项内容，不要额外解释。</div>
+                                </div>
+                                <div class="qa-detail-section">
+                                    <div class="qa-detail-title">📥 VLM原始回答</div>
+                                    <div class="qa-detail-content">叶部病害</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="qa-row">
+                            <div class="qa-label">Q0.2 花卉属</div>
+                            <div class="qa-value">Rosa (蔷薇属)</div>
+                            <div class="qa-status status-pass">✓</div>
+                            <button class="btn-small" onclick="toggleQADetail(event, 'qa_0_2')">
+                                <span class="expand-arrow">▼</span>
+                            </button>
+                            <div class="qa-detail" id="qa_0_2">
+                                <div class="qa-detail-section">
+                                    <div class="qa-detail-title">📤 原始问题 (Prompt)</div>
+                                    <div class="qa-detail-content">请识别图片中的花卉植物属于哪个属（Genus）。请用拉丁学名回答，格式为"属名 (中文名)"，例如："Rosa (蔷薇属)"。
+
+如果无法确定，请回答"未知属"。</div>
+                                </div>
+                                <div class="qa-detail-section">
+                                    <div class="qa-detail-title">📥 VLM原始回答</div>
+                                    <div class="qa-detail-content">Rosa (蔷薇属)</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="qa-row">
+                            <div class="qa-label">Q0.3 器官类型</div>
+                            <div class="qa-value">叶片</div>
+                            <div class="qa-status status-pass">✓</div>
+                            <button class="btn-small" onclick="toggleQADetail(event, 'qa_0_3')">
+                                <span class="expand-arrow">▼</span>
+                            </button>
+                            <div class="qa-detail" id="qa_0_3">
+                                <div class="qa-detail-section">
+                                    <div class="qa-detail-title">📤 原始问题 (Prompt)</div>
+                                    <div class="qa-detail-content">图片中主要展示的是植物的哪个器官？请从以下选项中选择：
+- 叶片
+- 花朵
+- 茎干
+- 果实
+- 根部
+
+只回答选项内容。</div>
+                                </div>
+                                <div class="qa-detail-section">
+                                    <div class="qa-detail-title">📥 VLM原始回答</div>
+                                    <div class="qa-detail-content">叶片</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="qa-row">
+                            <div class="qa-label">Q0.4 完整性</div>
+                            <div class="qa-value">完整可见</div>
+                            <div class="qa-status status-pass">✓</div>
+                            <button class="btn-small" onclick="toggleQADetail(event, 'qa_0_4')">
+                                <span class="expand-arrow">▼</span>
+                            </button>
+                            <div class="qa-detail" id="qa_0_4">
+                                <div class="qa-detail-section">
+                                    <div class="qa-detail-title">📤 原始问题 (Prompt)</div>
+                                    <div class="qa-detail-content">图片中的器官是否完整可见，没有被严重遮挡或截断？请回答"完整可见"或"不完整"。</div>
+                                </div>
+                                <div class="qa-detail-section">
+                                    <div class="qa-detail-title">📥 VLM原始回答</div>
+                                    <div class="qa-detail-content">完整可见</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="qa-row">
+                            <div class="qa-label">Q0.5 异常检测</div>
+                            <div class="qa-value">存在异常</div>
+                            <div class="qa-status status-pass">✓</div>
+                            <button class="btn-small" onclick="toggleQADetail(event, 'qa_0_5')">
+                                <span class="expand-arrow">▼</span>
+                            </button>
+                            <div class="qa-detail" id="qa_0_5">
+                                <div class="qa-detail-section">
+                                    <div class="qa-detail-title">📤 原始问题 (Prompt)</div>
+                                    <div class="qa-detail-content">仔细观察图片中的器官，是否存在病害症状或异常特征（如斑点、变色、粉状物、腐烂等）？
+
+如果发现明显的异常，回答"存在异常"；如果看起来健康正常，回答"无异常"。</div>
+                                </div>
+                                <div class="qa-detail-section">
+                                    <div class="qa-detail-title">📥 VLM原始回答</div>
+                                    <div class="qa-detail-content">存在异常。叶片上可见多个黑色斑点，周围有黄色晕圈，这是典型的病害症状。</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="margin: 16px 0; border-top: 2px solid #e8e8e8;"></div>
+                        <div class="qa-row">
+                            <div class="qa-label">Q1 症状类型</div>
+                            <div class="qa-value">坏死斑点 (necrosis_spot)</div>
+                            <div class="qa-status"></div>
+                            <button class="btn-small" onclick="toggleQADetail(event, 'qa_1')">
+                                <span class="expand-arrow">▼</span>
+                            </button>
+                            <div class="qa-detail" id="qa_1">
+                                <div class="qa-detail-section">
+                                    <div class="qa-detail-title">📤 原始问题 (Prompt)</div>
+                                    <div class="qa-detail-content">请描述图片中病害的主要症状类型。请从以下类型中选择最符合的一项：
+
+- necrosis_spot（坏死斑点）: 组织坏死形成的黑色或褐色斑点，像被烫过的焦痕
+- powdery_mildew（白粉病）: 叶片表面覆盖白色粉末状物质
+- rust（锈病）: 叶片上出现橙黄色或褐色的疱斑，像铁锈
+- mosaic（花叶病）: 叶片出现深浅不一的绿色斑驳，像马赛克图案
+- wilt（萎蔫）: 叶片或茎干失水下垂
+- rot（腐烂）: 组织软化腐烂，呈水渍状
+- canker（溃疡）: 茎干或枝条上的凹陷病斑
+- gall（虫瘿）: 组织异常增生形成的瘤状突起
+
+只回答对应的英文代码，如"necrosis_spot"。</div>
+                                </div>
+                                <div class="qa-detail-section">
+                                    <div class="qa-detail-title">📥 VLM原始回答</div>
+                                    <div class="qa-detail-content">necrosis_spot
+
+这些黑色斑点是典型的组织坏死症状，边界清晰，中心深黑色，符合坏死斑点的特征。</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="qa-row">
+                            <div class="qa-label">Q2 中心颜色</div>
+                            <div class="qa-value">黑色 (black)</div>
+                            <div class="qa-status"></div>
+                            <button class="btn-small" onclick="toggleQADetail(event, 'qa_2')">
+                                <span class="expand-arrow">▼</span>
+                            </button>
+                            <div class="qa-detail" id="qa_2">
+                                <div class="qa-detail-section">
+                                    <div class="qa-detail-title">📤 原始问题 (Prompt)</div>
+                                    <div class="qa-detail-content">请观察病斑的中心区域是什么颜色。从以下选项中选择：
+
+- black（黑色）
+- brown（褐色）
+- gray（灰色）
+- white（白色）
+- yellow（黄色）
+- orange（橙色）
+- red（红色）
+- purple（紫色）
+
+只回答颜色对应的英文代码。</div>
+                                </div>
+                                <div class="qa-detail-section">
+                                    <div class="qa-detail-title">📥 VLM原始回答</div>
+                                    <div class="qa-detail-content">black</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="qa-row">
+                            <div class="qa-label">Q3 边缘颜色</div>
+                            <div class="qa-value">黄色晕圈 (halo_yellow)</div>
+                            <div class="qa-status"></div>
+                            <button class="btn-small" onclick="toggleQADetail(event, 'qa_3')">
+                                <span class="expand-arrow">▼</span>
+                            </button>
+                            <div class="qa-detail" id="qa_3">
+                                <div class="qa-detail-section">
+                                    <div class="qa-detail-title">📤 原始问题 (Prompt)</div>
+                                    <div class="qa-detail-content">请观察病斑边缘或周围是否有晕圈。从以下选项中选择：
+
+- halo_yellow（黄色晕圈）: 病斑周围有明显的黄色光晕
+- halo_red（红色晕圈）: 病斑周围有红色或紫红色晕圈
+- halo_purple（紫色晕圈）: 病斑周围有紫色晕圈
+- no_halo（无晕圈）: 边缘清晰，没有明显晕圈
+- dark_brown（深褐色边缘）: 边缘为深褐色
+- black_border（黑色边缘）: 边缘有黑色线条
+
+只回答对应的英文代码。</div>
+                                </div>
+                                <div class="qa-detail-section">
+                                    <div class="qa-detail-title">📥 VLM原始回答</div>
+                                    <div class="qa-detail-content">halo_yellow
+
+病斑周围有明显的黄色晕圈，这是组织受损后叶绿素降解的表现。</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="qa-row">
+                            <div class="qa-label">Q4 发病位置</div>
+                            <div class="qa-value">叶片主体 (lamina)</div>
+                            <div class="qa-status"></div>
+                            <button class="btn-small" onclick="toggleQADetail(event, 'qa_4')">
+                                <span class="expand-arrow">▼</span>
+                            </button>
+                            <div class="qa-detail" id="qa_4">
+                                <div class="qa-detail-section">
+                                    <div class="qa-detail-title">📤 原始问题 (Prompt)</div>
+                                    <div class="qa-detail-content">病害主要发生在器官的哪个部位？从以下选项中选择：
+
+- lamina（叶片主体）: 叶片的主要区域，不在边缘或尖端
+- leaf_tip（叶尖）: 叶片最前端区域
+- leaf_edge（叶缘）: 叶片边缘
+- leaf_base（叶基）: 叶片基部，靠近叶柄处
+- vein（叶脉）: 沿着叶脉分布
+- petiole（叶柄）: 连接叶片和茎的部分
+- stem（茎）: 茎干部位
+- flower（花）: 花朵部位
+
+只回答对应的英文代码。</div>
+                                </div>
+                                <div class="qa-detail-section">
+                                    <div class="qa-detail-title">📥 VLM原始回答</div>
+                                    <div class="qa-detail-content">lamina</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="qa-row">
+                            <div class="qa-label">Q5 斑点大小</div>
+                            <div class="qa-value">中等 (medium)</div>
+                            <div class="qa-status"></div>
+                            <button class="btn-small" onclick="toggleQADetail(event, 'qa_5')">
+                                <span class="expand-arrow">▼</span>
+                            </button>
+                            <div class="qa-detail" id="qa_5">
+                                <div class="qa-detail-section">
+                                    <div class="qa-detail-title">📤 原始问题 (Prompt)</div>
+                                    <div class="qa-detail-content">病斑的大小大概是多少？从以下选项中选择：
+
+- pinpoint（针尖大小）: 直径 < 2mm
+- small（小型）: 直径 2-3mm
+- medium（中等）: 直径 3-8mm
+- large（大型）: 直径 8-15mm
+- coalesced（融合）: 多个病斑连接成大片
+
+只回答对应的英文代码。</div>
+                                </div>
+                                <div class="qa-detail-section">
+                                    <div class="qa-detail-title">📥 VLM原始回答</div>
+                                    <div class="qa-detail-content">medium
+
+病斑直径大约在5-7mm左右，属于中等大小。</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="qa-row">
+                            <div class="qa-label">Q6 分布模式</div>
+                            <div class="qa-value">散点分布 (scattered)</div>
+                            <div class="qa-status"></div>
+                            <button class="btn-small" onclick="toggleQADetail(event, 'qa_6')">
+                                <span class="expand-arrow">▼</span>
+                            </button>
+                            <div class="qa-detail" id="qa_6">
+                                <div class="qa-detail-section">
+                                    <div class="qa-detail-title">📤 原始问题 (Prompt)</div>
+                                    <div class="qa-detail-content">病斑在器官上是如何分布的？从以下选项中选择：
+
+- scattered（散点分布）: 病斑分散分布，间隔较远
+- clustered（聚集分布）: 病斑集中在某个区域
+- linear（线状分布）: 病斑沿直线或叶脉排列
+- circular（环状分布）: 病斑呈圆形或环状排列
+- marginal（边缘分布）: 病斑主要在器官边缘
+- uniform（均匀分布）: 病斑密集且均匀分布
+
+只回答对应的英文代码。</div>
+                                </div>
+                                <div class="qa-detail-section">
+                                    <div class="qa-detail-title">📥 VLM原始回答</div>
+                                    <div class="qa-detail-content">scattered
+
+病斑在叶片上散布，彼此之间有一定距离，没有集中在某一区域。</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 特征匹配详情 -->
+        <div class="detail-section">
+            <div class="collapsible active" id="matchSection">
+                <div class="collapsible-header" onclick="toggleCollapsible('matchSection')">
+                    <h3>🎯 特征匹配详情</h3>
+                    <span class="collapsible-icon">▼</span>
+                </div>
+                <div class="collapsible-content">
+                    <div class="score-display">92 / 100</div>
+
+                    <div class="feature-group">
+                        <div class="feature-group-title">主要特征 (权重80%)：</div>
+                        <div class="feature-detail">
+                            <div class="feature-name">• symptom_type: 坏死斑点 ✓</div>
+                            <div class="feature-score">得分：50 分</div>
+                        </div>
+                        <div class="feature-detail">
+                            <div class="feature-name">• color_border: 黄色晕圈 ✓</div>
+                            <div class="feature-score">得分：30 分</div>
+                        </div>
+                    </div>
+
+                    <div class="feature-group">
+                        <div class="feature-group-title">次要特征 (权重15%)：</div>
+                        <div class="feature-detail">
+                            <div class="feature-name">• color_center: 黑色 ✓</div>
+                            <div class="feature-score">得分：10 分</div>
+                        </div>
+                        <div class="feature-detail">
+                            <div class="feature-name">• location: 叶片 ✓</div>
+                            <div class="feature-score">得分：5 分</div>
+                        </div>
+                    </div>
+
+                    <div class="feature-group">
+                        <div class="feature-group-title">可选特征 (权重5%)：</div>
+                        <div class="feature-detail partial">
+                            <div class="feature-name">• size: 中等 ~ (模糊匹配)</div>
+                            <div class="feature-score" style="color: #fa8c16;">得分：2 分</div>
+                        </div>
+                        <div class="feature-detail">
+                            <div class="feature-name">• distribution: 散点分布 ✓</div>
+                            <div class="feature-score">得分：2 分</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 人工反馈 -->
+        <div class="feedback-section">
+            <p>根据您的专业判断，此诊断结果是否正确？</p>
+            <div class="feedback-buttons">
+                <button class="btn btn-success" onclick="submitFeedback('correct')">判断正确</button>
+                <button class="btn btn-danger" onclick="submitFeedback('incorrect')">判断错误</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 反馈成功模态框 -->
+    <div class="modal" id="feedbackModal">
+        <div class="modal-content">
+            <div class="modal-header">反馈已提交</div>
+            <div class="modal-body">
+                <p>感谢您的反馈！您的专业判断将帮助我们改进系统。</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="closeModal('feedbackModal')">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentImageFile = null;
+
+        // 上传相关函数
+        function triggerFileInput() {
+            document.getElementById('fileInput').click();
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file && file.type.startsWith('image/')) {
+                currentImageFile = file;
+                showPreview(file);
+            } else {
+                alert('请选择有效的图片文件！');
+            }
+        }
+
+        function handleDragOver(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            document.getElementById('uploadArea').classList.add('dragover');
+        }
+
+        function handleDragLeave(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            document.getElementById('uploadArea').classList.remove('dragover');
+        }
+
+        function handleDrop(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            document.getElementById('uploadArea').classList.remove('dragover');
+
+            const files = event.dataTransfer.files;
+            if (files.length > 0 && files[0].type.startsWith('image/')) {
+                currentImageFile = files[0];
+                showPreview(files[0]);
+            } else {
+                alert('请上传有效的图片文件！');
+            }
+        }
+
+        function showPreview(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('previewImage').src = e.target.result;
+                document.getElementById('uploadSection').classList.add('hidden');
+                document.getElementById('previewSection').classList.add('active');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function reupload() {
+            document.getElementById('uploadSection').classList.remove('hidden');
+            document.getElementById('previewSection').classList.remove('active');
+            document.getElementById('resultSection').classList.remove('active');
+            document.getElementById('fileInput').value = '';
+            currentImageFile = null;
+        }
+
+        function startDiagnosis() {
+            // 模拟检测过程
+            const btn = event.target;
+            btn.disabled = true;
+            btn.textContent = '🔄 检测中...';
+
+            // 更新结果区域的图片
+            setTimeout(() => {
+                const previewSrc = document.getElementById('previewImage').src;
+                document.getElementById('diagnosisImage').src = previewSrc;
+
+                // 显示结果，隐藏预览
+                document.getElementById('previewSection').classList.remove('active');
+                document.getElementById('resultSection').classList.add('active');
+
+                btn.disabled = false;
+                btn.textContent = '🔍 开始检测';
+            }, 1500);
+        }
+
+        function toggleCollapsible(id) {
+            const section = document.getElementById(id);
+            section.classList.toggle('active');
+        }
+
+        function toggleQADetail(event, detailId) {
+            event.stopPropagation();
+            const qaRow = event.target.closest('.qa-row');
+            qaRow.classList.toggle('expanded');
+        }
+
+        function goBack() {
+            if (confirm('确定要返回首页吗？')) {
+                window.location.reload();
+            }
+        }
+
+        function submitFeedback(type) {
+            const modal = document.getElementById('feedbackModal');
+            modal.classList.add('active');
+            console.log('Feedback submitted:', type);
+        }
+
+        function closeModal(id) {
+            const modal = document.getElementById(id);
+            modal.classList.remove('active');
+        }
+
+        // 点击模态框背景关闭
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.classList.remove('active');
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+{
+  "disease_id": "rose_powdery_mildew",
+  "disease_name": "玫瑰白粉病",
+  "disease_name_en": "Rose Powdery Mildew",
+  "version": "v3.1",
+  "git_commit": "ghi9012",
+  "updated_at": "2025-11-08T15:30:00Z",
+  "host_plants": ["Rosa"],
+  "pathogen": {
+    "scientific_name": "Podosphaera pannosa",
+    "common_name": "白粉病菌"
+  },
+  "description": "玫瑰白粉病由Podosphaera pannosa真菌引起，叶片、嫩茎和花蕾表面出现白色粉状物，严重影响观赏价值。",
+  "feature_vector": {
+    "major": {
+      "symptom_type": "powdery_coating",
+      "color_center": "white",
+      "color_border": "none"
+    },
+    "minor": {
+      "texture": "powdery",
+      "shape": "irregular"
+    },
+    "optional": {
+      "distribution": "uniform",
+      "size": "small"
+    }
+  },
+  "treatment_suggestions": [
+    "喷施硫磺粉或三唑酮类杀菌剂",
+    "清理病叶，保持植株干燥",
+    "避免过度施氮肥，增强植株抗病性",
+    "使用生物防治剂（如枯草芽孢杆菌）"
+  ],
+  "prevention_measures": [
+    "选择抗病品种",
+    "保持适当通风和光照",
+    "及时修剪病枝",
+    "预防性喷施杀菌剂"
+  ]
+}
