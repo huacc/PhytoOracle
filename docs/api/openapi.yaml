@@ -512,6 +512,1218 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /diagnose/batch:
+    post:
+      summary: 批量诊断
+      description: |
+        批量上传多张花卉图片进行疾病诊断。
+
+        **限制**：
+        - 单次最多上传20张图片
+        - 每张图片不超过10MB
+        - 支持JPG/PNG/HEIC格式
+
+        **处理方式**：
+        - 异步处理，返回batch_id用于查询进度
+        - 使用WebSocket或轮询方式获取实时进度
+
+      operationId: diagnoseBatch
+      tags:
+        - Diagnosis
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - images
+              properties:
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: 图片文件数组（最多20张）
+                  minItems: 1
+                  maxItems: 20
+                flower_genus:
+                  type: string
+                  description: 花卉种属（可选，提供后可提高诊断准确率）
+                  enum: [Rosa, Prunus, Tulipa, Dianthus, Paeonia]
+                  example: Rosa
+      responses:
+        '200':
+          description: 批量诊断任务创建成功
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - batch_id
+                  - timestamp
+                  - total
+                  - status
+                properties:
+                  batch_id:
+                    type: string
+                    description: 批量诊断任务ID
+                    example: "batch_20250116_001"
+                  timestamp:
+                    type: string
+                    format: date-time
+                    description: 任务创建时间
+                    example: "2025-01-16T10:00:00Z"
+                  total:
+                    type: integer
+                    description: 待诊断图片总数
+                    example: 10
+                  completed:
+                    type: integer
+                    description: 已完成诊断数量
+                    example: 0
+                  status:
+                    type: string
+                    enum: [pending, processing, completed, failed]
+                    description: 批量任务状态
+                    example: "processing"
+                  results:
+                    type: array
+                    description: 已完成的诊断结果列表
+                    items:
+                      $ref: '#/components/schemas/DiagnosisResponse'
+              example:
+                batch_id: "batch_20250116_001"
+                timestamp: "2025-01-16T10:00:00Z"
+                total: 10
+                completed: 0
+                status: "processing"
+                results: []
+        '400':
+          description: 请求错误（图片数量超限、格式不支持等）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "too_many_images"
+                detail: "单次批量诊断最多支持20张图片"
+                timestamp: "2025-01-16T10:00:00Z"
+        '500':
+          description: 服务器错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /diagnosis/result/{diagnosisId}:
+    get:
+      summary: 获取诊断结果详情
+      description: |
+        通过诊断ID查询单次诊断的详细结果。
+
+      operationId: getDiagnosisResult
+      tags:
+        - Diagnosis
+      parameters:
+        - name: diagnosisId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 诊断ID
+          example: "diag_20250111_001"
+      responses:
+        '200':
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DiagnosisResponse'
+        '404':
+          description: 诊断记录不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "diagnosis_not_found"
+                detail: "未找到指定的诊断记录"
+                timestamp: "2025-01-16T10:00:00Z"
+        '500':
+          description: 服务器错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /diseases/{diseaseId}:
+    get:
+      summary: 获取单个疾病详情
+      description: |
+        通过疾病ID查询该疾病的详细信息。
+
+      operationId: getDiseaseDetail
+      tags:
+        - Knowledge
+      parameters:
+        - name: diseaseId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 疾病ID
+          example: "rose_black_spot"
+      responses:
+        '200':
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Disease'
+        '404':
+          description: 疾病不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "disease_not_found"
+                detail: "未找到指定的疾病"
+                timestamp: "2025-01-16T10:00:00Z"
+        '500':
+          description: 服务器错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /diagnosis/{diagnosisId}/feedback:
+    post:
+      summary: 提交用户反馈
+      description: |
+        用户对诊断结果进行反馈标注（正确/错误）。
+
+        **用途**：
+        - 收集用户反馈改进模型
+        - 标注数据用于模型训练
+        - 诊断准确率统计
+
+      operationId: submitFeedback
+      tags:
+        - Diagnosis
+      parameters:
+        - name: diagnosisId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 诊断ID
+          example: "diag_20250111_001"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - feedback
+              properties:
+                feedback:
+                  type: string
+                  enum: [correct, incorrect]
+                  description: 反馈类型
+                  example: "correct"
+                comment:
+                  type: string
+                  description: 用户备注（可选）
+                  example: "诊断非常准确"
+      responses:
+        '200':
+          description: 反馈提交成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "感谢您的反馈"
+        '404':
+          description: 诊断记录不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 服务器错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /diagnosis/export:
+    get:
+      summary: 导出诊断结果
+      description: |
+        导出指定诊断记录为Excel文件。
+
+        **支持格式**：
+        - excel（.xlsx）
+
+      operationId: exportDiagnosis
+      tags:
+        - Diagnosis
+      parameters:
+        - name: diagnosis_ids
+          in: query
+          required: true
+          schema:
+            type: string
+          description: 诊断ID列表（逗号分隔）
+          example: "diag_20250111_001,diag_20250111_002"
+        - name: format
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [excel]
+            default: excel
+          description: 导出格式
+      responses:
+        '200':
+          description: 导出成功
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: 请求参数错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 服务器错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /knowledge/tree:
+    get:
+      summary: 获取知识库目录树
+      description: |
+        获取知识库的层级目录结构，按花卉种属组织疾病列表。
+
+        **返回结构**：
+        ```
+        Rosa (玫瑰)
+          ├─ 玫瑰黑斑病
+          ├─ 玫瑰白粉病
+          └─ ...
+        Prunus (樱花)
+          ├─ 樱花褐斑病
+          └─ ...
+        ```
+
+      operationId: getKnowledgeTree
+      tags:
+        - Knowledge
+      responses:
+        '200':
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tree:
+                    type: object
+                    description: 知识库树结构（按genus组织）
+                    additionalProperties:
+                      type: object
+                      properties:
+                        genus_name_zh:
+                          type: string
+                          description: 种属中文名
+                        diseases:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              disease_id:
+                                type: string
+                              disease_name:
+                                type: string
+                              last_updated:
+                                type: string
+                                format: date-time
+                  total_diseases:
+                    type: integer
+                    description: 总疾病数量
+                  version:
+                    type: string
+                    description: 知识库版本号
+              example:
+                tree:
+                  Rosa:
+                    genus_name_zh: "玫瑰/月季"
+                    diseases:
+                      - disease_id: "rose_black_spot"
+                        disease_name: "玫瑰黑斑病"
+                        last_updated: "2025-01-10T12:00:00Z"
+                      - disease_id: "rose_powdery_mildew"
+                        disease_name: "玫瑰白粉病"
+                        last_updated: "2025-01-10T12:00:00Z"
+                  Prunus:
+                    genus_name_zh: "樱花/李属"
+                    diseases:
+                      - disease_id: "prunus_brown_spot"
+                        disease_name: "樱花褐斑病"
+                        last_updated: "2025-01-10T12:00:00Z"
+                total_diseases: 22
+                version: "v20250111_143000"
+        '500':
+          description: 服务器错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /knowledge/disease/{diseaseId}:
+    get:
+      summary: 获取疾病知识详情
+      description: |
+        获取指定疾病的完整知识信息，包括VLM描述、特征向量、治疗方案等。
+
+      operationId: getDiseaseKnowledge
+      tags:
+        - Knowledge
+      parameters:
+        - name: diseaseId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 疾病ID
+          example: "rose_black_spot"
+      responses:
+        '200':
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - disease_id
+                  - disease_name
+                  - pathogen
+                  - feature_vector
+                properties:
+                  disease_id:
+                    type: string
+                    example: "rose_black_spot"
+                  disease_name:
+                    type: string
+                    example: "玫瑰黑斑病"
+                  common_name_en:
+                    type: string
+                    example: "Black Spot"
+                  pathogen:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        example: "Diplocarpon rosae"
+                      type:
+                        type: string
+                        enum: [fungal, bacterial, viral, pest]
+                        example: "fungal"
+                  affected_plants:
+                    type: array
+                    items:
+                      type: string
+                    example: ["Rosa"]
+                  feature_vector:
+                    $ref: '#/components/schemas/FeatureVector'
+                  vlm_descriptions:
+                    type: array
+                    description: VLM多轮描述（Q0-Q6）
+                    items:
+                      type: object
+                      properties:
+                        question_id:
+                          type: string
+                          example: "Q1"
+                        question_text:
+                          type: string
+                          example: "What type of symptom is visible?"
+                        expected_answer:
+                          type: string
+                          example: "spot"
+                  major_features:
+                    type: array
+                    description: 主要特征（30分权重）
+                    items:
+                      type: object
+                      properties:
+                        feature_name:
+                          type: string
+                        feature_value:
+                          type: string
+                  minor_features:
+                    type: array
+                    description: 次要特征（15分权重）
+                    items:
+                      type: object
+                      properties:
+                        feature_name:
+                          type: string
+                        feature_value:
+                          type: string
+                  optional_features:
+                    type: array
+                    description: 可选特征（5分权重）
+                    items:
+                      type: object
+                      properties:
+                        feature_name:
+                          type: string
+                        feature_value:
+                          type: string
+                  treatment_recommendations:
+                    type: array
+                    description: 治疗建议
+                    items:
+                      type: string
+                  last_updated:
+                    type: string
+                    format: date-time
+                    example: "2025-01-10T12:00:00Z"
+        '404':
+          description: 疾病不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 服务器错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: 保存疾病知识修改
+      description: |
+        保存对疾病知识的修改（VLM描述、特征向量、治疗方案等）。
+
+        **权限要求**: 需要管理员认证
+
+      operationId: saveDiseaseKnowledge
+      tags:
+        - Knowledge
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: diseaseId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 疾病ID
+          example: "rose_black_spot"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                disease_name:
+                  type: string
+                  description: 疾病中文名
+                common_name_en:
+                  type: string
+                  description: 疾病英文名
+                pathogen:
+                  type: object
+                  description: 病原体信息
+                feature_vector:
+                  $ref: '#/components/schemas/FeatureVector'
+                vlm_descriptions:
+                  type: array
+                  description: VLM描述列表
+                  items:
+                    type: object
+                major_features:
+                  type: array
+                  description: 主要特征
+                  items:
+                    type: object
+                minor_features:
+                  type: array
+                  description: 次要特征
+                  items:
+                    type: object
+                treatment_recommendations:
+                  type: array
+                  description: 治疗建议
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: 保存成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "疾病知识保存成功"
+                  updated_at:
+                    type: string
+                    format: date-time
+                    example: "2025-01-16T10:00:00Z"
+        '400':
+          description: 数据验证失败
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "validation_failed"
+                detail: "特征向量缺少必填字段 symptom_type"
+                timestamp: "2025-01-16T10:00:00Z"
+        '401':
+          description: 未授权
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 疾病不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 服务器错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /knowledge/validate:
+    post:
+      summary: 验证疾病知识数据
+      description: |
+        验证疾病知识数据的完整性和正确性，返回验证结果。
+
+        **验证项**：
+        - 必填字段检查
+        - 特征向量格式验证
+        - VLM描述完整性检查
+        - 枚举值范围验证
+
+      operationId: validateKnowledge
+      tags:
+        - Knowledge
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: 待验证的疾病知识数据
+      responses:
+        '200':
+          description: 验证完成
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - valid
+                  - errors
+                  - warnings
+                properties:
+                  valid:
+                    type: boolean
+                    description: 是否验证通过
+                    example: false
+                  errors:
+                    type: array
+                    description: 错误列表（阻塞性问题）
+                    items:
+                      type: object
+                      properties:
+                        field:
+                          type: string
+                          example: "feature_vector.symptom_type"
+                        message:
+                          type: string
+                          example: "必填字段缺失"
+                  warnings:
+                    type: array
+                    description: 警告列表（非阻塞性问题）
+                    items:
+                      type: object
+                      properties:
+                        field:
+                          type: string
+                        message:
+                          type: string
+        '500':
+          description: 服务器错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /knowledge/snapshot:
+    post:
+      summary: 创建知识库快照
+      description: |
+        创建当前知识库的版本快照，用于版本管理和回滚。
+
+        **权限要求**: 需要管理员认证
+
+      operationId: createSnapshot
+      tags:
+        - Knowledge
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - version
+                - description
+              properties:
+                version:
+                  type: string
+                  description: 版本号（建议格式：vYYYYMMDD）
+                  example: "v20250116"
+                description:
+                  type: string
+                  description: 修改说明
+                  example: "新增5种玫瑰疾病"
+      responses:
+        '200':
+          description: 快照创建成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  snapshot_id:
+                    type: string
+                    example: "snap_20250116_001"
+                  version:
+                    type: string
+                    example: "v20250116"
+                  created_at:
+                    type: string
+                    format: date-time
+                    example: "2025-01-16T10:00:00Z"
+                  disease_count:
+                    type: integer
+                    example: 27
+        '401':
+          description: 未授权
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 服务器错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /knowledge/snapshots:
+    get:
+      summary: 获取快照历史列表
+      description: |
+        查询知识库的所有历史快照。
+
+        **权限要求**: 需要管理员认证
+
+      operationId: getSnapshots
+      tags:
+        - Knowledge
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    snapshot_id:
+                      type: string
+                      example: "snap_20250116_001"
+                    version:
+                      type: string
+                      example: "v20250116"
+                    description:
+                      type: string
+                      example: "新增5种玫瑰疾病"
+                    created_at:
+                      type: string
+                      format: date-time
+                    disease_count:
+                      type: integer
+                    created_by:
+                      type: string
+                      example: "admin"
+        '401':
+          description: 未授权
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 服务器错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /knowledge/restore/{snapshotId}:
+    post:
+      summary: 恢复历史快照
+      description: |
+        将知识库回滚到指定的历史快照版本。
+
+        **权限要求**: 需要管理员认证
+        **注意**: 此操作会覆盖当前知识库，建议先创建当前快照
+
+      operationId: restoreSnapshot
+      tags:
+        - Knowledge
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: snapshotId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 快照ID
+          example: "snap_20250116_001"
+      responses:
+        '200':
+          description: 恢复成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "知识库已恢复到版本 v20250116"
+                  restored_version:
+                    type: string
+                    example: "v20250116"
+        '401':
+          description: 未授权
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 快照不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 服务器错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /knowledge/test-diagnosis:
+    post:
+      summary: 测试诊断（使用新知识）
+      description: |
+        使用修改后的疾病知识进行诊断测试，不保存结果。
+
+        **用途**：在保存新知识前测试其诊断效果
+
+      operationId: testDiagnosis
+      tags:
+        - Knowledge
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - image
+                - disease_id
+              properties:
+                image:
+                  type: string
+                  format: binary
+                  description: 测试图片
+                disease_id:
+                  type: string
+                  description: 待测试的疾病ID
+                  example: "rose_black_spot"
+      responses:
+        '200':
+          description: 测试完成
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  matched:
+                    type: boolean
+                    description: 是否匹配到指定疾病
+                    example: true
+                  confidence:
+                    type: number
+                    format: float
+                    description: 置信度
+                    example: 0.92
+                  score:
+                    type: number
+                    description: 匹配得分
+                    example: 92.5
+                  feature_vector:
+                    $ref: '#/components/schemas/FeatureVector'
+                  reasoning:
+                    type: array
+                    items:
+                      type: string
+        '400':
+          description: 请求错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: 疾病不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 服务器错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /ontology/features:
+    get:
+      summary: 获取特征本体
+      description: |
+        获取特征本体的完整定义，包括所有特征维度和枚举值。
+
+        **特征本体包含**：
+        - Q0-Q6 问诊序列的所有特征维度
+        - 每个维度的允许值（枚举）
+        - 特征的类型和描述
+
+      operationId: getFeatureOntology
+      tags:
+        - Knowledge
+      responses:
+        '200':
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    description: 特征总数
+                    example: 45
+                  features:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - feature_id
+                        - feature_name
+                        - feature_type
+                      properties:
+                        feature_id:
+                          type: string
+                          description: 特征ID（英文）
+                          example: "symptom_type"
+                        feature_name:
+                          type: string
+                          description: 特征名称（中文）
+                          example: "症状类型"
+                        feature_type:
+                          type: string
+                          enum: [enum, string, number, boolean]
+                          description: 特征值类型
+                          example: "enum"
+                        feature_category:
+                          type: string
+                          description: 特征分类
+                          example: "symptom"
+                        allowed_values:
+                          type: array
+                          description: 允许的枚举值（仅enum类型）
+                          items:
+                            type: string
+                          example: ["spot", "wilting", "discoloration", "deformation"]
+                        description:
+                          type: string
+                          description: 特征说明
+                          example: "病症的主要类型"
+                        question_id:
+                          type: string
+                          description: 对应的问诊序列ID
+                          example: "Q1"
+                  version:
+                    type: string
+                    description: 本体版本号
+                    example: "1.0.0"
+              example:
+                total: 45
+                features:
+                  - feature_id: "symptom_type"
+                    feature_name: "症状类型"
+                    feature_type: "enum"
+                    feature_category: "symptom"
+                    allowed_values: ["spot", "wilting", "discoloration", "deformation", "pest", "mold", "other"]
+                    description: "病症的主要类型"
+                    question_id: "Q1"
+                  - feature_id: "colors"
+                    feature_name: "病症颜色"
+                    feature_type: "enum"
+                    feature_category: "symptom"
+                    allowed_values: ["black", "brown", "yellow", "white", "red", "orange"]
+                    description: "病症呈现的颜色"
+                    question_id: "Q2"
+                version: "1.0.0"
+        '500':
+          description: 服务器错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /ontology/disease:
+    get:
+      summary: 获取疾病Schema
+      description: |
+        获取疾病本体Schema定义，包括必填字段和可选字段。
+
+      operationId: getDiseaseSchema
+      tags:
+        - Knowledge
+      responses:
+        '200':
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  schema_id:
+                    type: string
+                    example: "disease_schema"
+                  version:
+                    type: string
+                    example: "1.0.0"
+                  required_fields:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        field_name:
+                          type: string
+                        display_name:
+                          type: string
+                        type:
+                          type: string
+                        required:
+                          type: boolean
+                        description:
+                          type: string
+                  optional_fields:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        field_name:
+                          type: string
+                        display_name:
+                          type: string
+                        type:
+                          type: string
+                        required:
+                          type: boolean
+                        description:
+                          type: string
+        '500':
+          description: 服务器错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /ontology/host:
+    get:
+      summary: 获取宿主Schema
+      description: |
+        获取宿主（植物）本体Schema定义。
+
+      operationId: getHostSchema
+      tags:
+        - Knowledge
+      responses:
+        '200':
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  schema_id:
+                    type: string
+                    example: "host_schema"
+                  version:
+                    type: string
+                    example: "1.0.0"
+                  fields:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        field_name:
+                          type: string
+                        display_name:
+                          type: string
+                        type:
+                          type: string
+                        required:
+                          type: boolean
+                        description:
+                          type: string
+        '500':
+          description: 服务器错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /ontology/treatment:
+    get:
+      summary: 获取治疗Schema
+      description: |
+        获取治疗方案本体Schema定义。
+
+      operationId: getTreatmentSchema
+      tags:
+        - Knowledge
+      responses:
+        '200':
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  schema_id:
+                    type: string
+                    example: "treatment_schema"
+                  version:
+                    type: string
+                    example: "0.1.0"
+                  fields:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        field_name:
+                          type: string
+                        display_name:
+                          type: string
+                        type:
+                          type: string
+                        required:
+                          type: boolean
+                        description:
+                          type: string
+        '500':
+          description: 服务器错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/logout:
+    post:
+      summary: 管理员登出
+      description: |
+        管理员登出，使当前Token失效。
+
+      operationId: logout
+      tags:
+        - Auth
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: 登出成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "登出成功"
+        '401':
+          description: 未授权
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: 服务器错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 components:
   securitySchemes:
     ApiKeyAuth:
